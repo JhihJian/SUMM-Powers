@@ -16,6 +16,22 @@ There's a bunch more to it, but that's the core of the system. And because the s
 
 ## Installation
 
+### Option 1: CLI Installation
+
+Register the marketplace first:
+
+```bash
+claude plugin marketplace add https://github.com/JhihJian/SUMM-Powers
+```
+
+Then install the plugin:
+
+```bash
+claude plugin install summ@summ-dev
+```
+
+### Option 2: In-App Installation
+
 In Claude Code, register the marketplace first:
 
 ```bash
@@ -86,6 +102,7 @@ Check that commands appear:
 **Meta**
 - **writing-skills** - Create new skills following best practices (includes testing methodology)
 - **using-summ** - Introduction to the skills system
+- **taskwarrior** - Task tracking integration for plan writing and execution
 
 ## Philosophy
 
