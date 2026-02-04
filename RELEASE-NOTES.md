@@ -1,47 +1,8 @@
 # Superpowers Release Notes
 
-## v4.1.1 (2026-01-23)
-
-### Fixes
-
-**OpenCode: Standardized on `plugins/` directory per official docs (#343)**
-
-OpenCode's official documentation uses `~/.config/opencode/plugins/` (plural). Our docs previously used `plugin/` (singular). While OpenCode accepts both forms, we've standardized on the official convention to avoid confusion.
-
-Changes:
-- Renamed `.opencode/plugin/` to `.opencode/plugins/` in repo structure
-- Updated all installation docs (INSTALL.md, README.opencode.md) across all platforms
-- Updated test scripts to match
-
-**OpenCode: Fixed symlink instructions (#339, #342)**
-
-- Added explicit `rm` before `ln -s` (fixes "file already exists" errors on reinstall)
-- Added missing skills symlink step that was absent from INSTALL.md
-- Updated from deprecated `use_skill`/`find_skills` to native `skill` tool references
-
----
-
 ## v4.1.0 (2026-01-23)
 
-### Breaking Changes
-
-**OpenCode: Switched to native skills system**
-
-Superpowers for OpenCode now uses OpenCode's native `skill` tool instead of custom `use_skill`/`find_skills` tools. This is a cleaner integration that works with OpenCode's built-in skill discovery.
-
-**Migration required:** Skills must be symlinked to `~/.config/opencode/skills/superpowers/` (see updated installation docs).
-
 ### Fixes
-
-**OpenCode: Fixed agent reset on session start (#226)**
-
-The previous bootstrap injection method using `session.prompt({ noReply: true })` caused OpenCode to reset the selected agent to "build" on first message. Now uses `experimental.chat.system.transform` hook which modifies the system prompt directly without side effects.
-
-**OpenCode: Fixed Windows installation (#232)**
-
-- Removed dependency on `skills-core.js` (eliminates broken relative imports when file is copied instead of symlinked)
-- Added comprehensive Windows installation docs for cmd.exe, PowerShell, and Git Bash
-- Documented proper symlink vs junction usage for each platform
 
 **Claude Code: Fixed Windows hook execution for Claude Code 2.1.x**
 
@@ -196,48 +157,6 @@ Description changed to imperative: "You MUST use this before any creative work�
 
 ---
 
-## v3.5.1 (2025-11-24)
-
-### Changed
-
-- **OpenCode Bootstrap Refactor**: Switched from `chat.message` hook to `session.created` event for bootstrap injection
-  - Bootstrap now injects at session creation via `session.prompt()` with `noReply: true`
-  - Explicitly tells the model that using-superpowers is already loaded to prevent redundant skill loading
-  - Consolidated bootstrap content generation into shared `getBootstrapContent()` helper
-  - Cleaner single-implementation approach (removed fallback pattern)
-
----
-
-## v3.5.0 (2025-11-23)
-
-### Added
-
-- **OpenCode Support**: Native JavaScript plugin for OpenCode.ai
-  - Custom tools: `use_skill` and `find_skills`
-  - Message insertion pattern for skill persistence across context compaction
-  - Automatic context injection via chat.message hook
-  - Auto re-injection on session.compacted events
-  - Three-tier skill priority: project > personal > superpowers
-  - Project-local skills support (`.opencode/skills/`)
-  - Shared core module (`lib/skills-core.js`) for code reuse with Codex
-  - Automated test suite with proper isolation (`tests/opencode/`)
-  - Platform-specific documentation (`docs/README.opencode.md`, `docs/README.codex.md`)
-
-### Changed
-
-- **Refactored Codex Implementation**: Now uses shared `lib/skills-core.js` ES module
-  - Eliminates code duplication between Codex and OpenCode
-  - Single source of truth for skill discovery and parsing
-  - Codex successfully loads ES modules via Node.js interop
-
-- **Improved Documentation**: Rewrote README to explain problem/solution clearly
-  - Removed duplicate sections and conflicting information
-  - Added complete workflow description (brainstorm → plan → execute → finish)
-  - Simplified platform installation instructions
-  - Emphasized skill-checking protocol over automatic activation claims
-
----
-
 ## v3.4.1 (2025-10-31)
 
 ### Improvements
@@ -258,36 +177,6 @@ Description changed to imperative: "You MUST use this before any creative work�
 - Applied writing clarity improvements to `brainstorming` skill following Strunk's "Elements of Style" principles (omitted needless words, converted negative to positive form, improved parallel construction).
 
 ### Bug Fixes
-
-- Clarified `writing-skills` guidance so it points to the correct agent-specific personal skill directories (`~/.claude/skills` for Claude Code, `~/.codex/skills` for Codex).
-
-## v3.3.0 (2025-10-28)
-
-### New Features
-
-**Experimental Codex Support**
-- Added unified `superpowers-codex` script with bootstrap/use-skill/find-skills commands
-- Cross-platform Node.js implementation (works on Windows, macOS, Linux)
-- Namespaced skills: `superpowers:skill-name` for superpowers skills, `skill-name` for personal
-- Personal skills override superpowers skills when names match
-- Clean skill display: shows name/description without raw frontmatter
-- Helpful context: shows supporting files directory for each skill
-- Tool mapping for Codex: TodoWrite→update_plan, subagents→manual fallback, etc.
-- Bootstrap integration with minimal AGENTS.md for automatic startup
-- Complete installation guide and bootstrap instructions specific to Codex
-
-**Key differences from Claude Code integration:**
-- Single unified script instead of separate tools
-- Tool substitution system for Codex-specific equivalents
-- Simplified subagent handling (manual work instead of delegation)
-- Updated terminology: "Superpowers skills" instead of "Core skills"
-
-### Files Added
-- `.codex/INSTALL.md` - Installation guide for Codex users
-- `.codex/superpowers-bootstrap.md` - Bootstrap instructions with Codex adaptations
-- `.codex/superpowers-codex` - Unified Node.js executable with all functionality
-
-**Note:** Codex support is experimental. The integration provides core superpowers functionality but may require refinement based on user feedback.
 
 ## v3.2.3 (2025-10-23)
 
