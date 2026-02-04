@@ -13,6 +13,33 @@ Load plan, review critically, execute tasks in batches, report for review betwee
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
+**OPTIONAL SUB-SKILL:** Use summ:taskwarrior to track execution progress
+
+## Task Tracking
+
+When tracking with TaskWarrior:
+
+```bash
+# Get project and plan identifiers
+PLAN_FILE=$(basename "$PLAN_PATH" .md)
+PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1#p' || \
+  basename "$(git rev-parse --show-toplevel 2>/dev/null)" || \
+  echo "summ-plans")
+
+# Create a task for each Task in the plan
+for TASK_NAME in "Task 1: ..." "Task 2: ..." "Task 3: ..."; do
+  task add project:$PROJECT +execute +plan:$PLAN_FILE "$TASK_NAME"
+done
+
+# Start working on a task
+task $UUID start
+
+# Complete when done
+task $UUID done
+```
+
+**Keep it simple:** One TaskWarrior task per plan Task. No dependencies, no parent/child relationships.
+
 ## The Process
 
 ### Step 1: Load and Review Plan

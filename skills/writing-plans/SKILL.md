@@ -17,6 +17,29 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 
+**OPTIONAL SUB-SKILL:** Use summ:taskwarrior to track plan writing progress
+
+## Task Tracking
+
+When tracking with TaskWarrior:
+
+```bash
+# Get project name
+PLAN_FILE=$(basename "$PLAN_PATH" .md)
+PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1#p' || \
+  basename "$(git rev-parse --show-toplevel 2>/dev/null)" || \
+  echo "summ-plans")
+
+# Create plan task before writing
+TASK_ID=$(task add project:$PROJECT +plan +plan:$PLAN_FILE "Write plan: <title>" | grep -oP 'Created task \K\d+')
+
+# Start writing
+task $TASK_ID start
+
+# Complete when plan is saved
+task $TASK_ID done
+```
+
 ## Bite-Sized Task Granularity
 
 **Each step is one action (2-5 minutes):**
