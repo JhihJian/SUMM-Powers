@@ -13,7 +13,7 @@ Execute small, clear tasks directly: analyze → confirm → execute → verify.
 
 **Announce at start:** "I'm using the todo skill to quickly complete this task."
 
-**OPTIONAL SUB-SKILL:** Use summ:taskwarrior for global tracking
+**CRITICAL:** Always create a TaskWarrior task for global tracking. Do this FIRST after user confirms the plan.
 
 ## When to Use
 
@@ -72,18 +72,17 @@ Complexity: simple/medium/complex
 - **Simple/medium:** "Does this look right? Should I proceed?"
 - **Complex:** "This task is somewhat complex. Do you want to proceed directly or use /summ:writing-plans for a structured approach?"
 
-On confirmation:
-1. Create TodoWrite for step tracking
-2. **Invoke Skill tool with `summ:taskwarrior` to create a tracking task**
+**On confirmation, do these TWO things in order:**
 
-### Step 2.5: Create TaskWarrior Task
+1. **FIRST: Create TaskWarrior task** - Use Skill tool to invoke `summ:taskwarrior`
+   - Description: brief summary of the todo task
+   - Project: auto-detected from git repo
+   - Tags: +todo
+   - Save the returned task ID for completion later
 
-Use the Skill tool to invoke `summ:taskwarrior` and create a global tracking task:
-- Description: brief summary of the todo task
-- Project: auto-detected from git repo
-- Tags: +todo
+2. **THEN: Create TodoWrite** for step tracking during execution
 
-This ensures the task is tracked globally even if the conversation is interrupted.
+**Why TaskWarrior first:** Ensures task is tracked globally even if conversation is interrupted.
 
 ### Step 3: Execute
 
@@ -98,30 +97,9 @@ For each todo:
    - Code changes: tests, build, or lint
    - Setup: verify installation works
    - Configuration: verify config is applied
-2. Summarize what was changed
-3. **Invoke Skill tool with `summ:taskwarrior` to mark the tracking task done**
+2. **CRITICAL: Mark TaskWarrior task done** - Use Skill tool to invoke `summ:taskwarrior` with the saved task ID
+3. Summarize what was changed
 4. Clear TodoWrite list
-
-## TaskWarrior Integration
-
-Create one task for the entire todo session:
-
-```bash
-# Get project identifier
-PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1#p' || \
-  basename "$(git rev-parse --show-toplevel 2>/dev/null)" || \
-  echo "summ-todo")
-
-# Create task
-TASK_UUID=$(task add project:$PROJECT +todo "[brief description]")
-
-# ... execute todos ...
-
-# Complete when done
-task $TASK_UUID done
-```
-
-**Keep it simple:** One TaskWarrior task per todo skill invocation.
 
 ## When to Stop and Suggest Upgrading
 
@@ -142,12 +120,16 @@ task $TASK_UUID done
 | Creating plan files | Don't. That's what writing-plans is for |
 | Skipping verification | Always verify before completing |
 | Too many questions | If you can't understand after reasonable questions, suggest brainstorming |
+| **Forgetting to create TaskWarrior task** | **Create it FIRST after user confirms. This is CRITICAL.** |
 | One TaskWarrior task per step | No, one task for the entire todo session |
+| **Not marking TaskWarrior task done** | **Must mark done before clearing TodoWrite** |
 
 ## Integration with Other Skills
 
+**Required sub-skill:**
+- `summ:taskwarrior` - Global task tracking (CRITICAL: always use)
+
 **Optional sub-skills:**
-- `summ:taskwarrior` - Global task tracking
 - `summ:systematic-debugging` - When problems arise during execution
 - `summ:verification-before-completion` - Final verification
 
@@ -157,9 +139,10 @@ task $TASK_UUID done
 
 ## Remember
 
+- **ALWAYS create TaskWarrior task FIRST after user confirms**
+- **ALWAYS mark TaskWarrior task done before clearing TodoWrite**
 - Ask questions until you understand, then confirm and execute
 - Read as many files as needed
-- Create one TaskWarrior task per todo skill invocation
 - Don't create design docs or plan files
 - Verify work before completing
 - Suggest upgrading to writing-plans when task gets complex
