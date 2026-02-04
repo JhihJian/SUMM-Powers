@@ -1,16 +1,6 @@
 ---
-description: Execute small, straightforward tasks quickly without design overhead
+description: "You MUST use this for small, logically straightforward tasks that don't require design docs or detailed plans. Quick analyze-confirm-execute cycle for simple fixes, small features, or setup tasks."
+disable-model-invocation: true
 ---
 
-Use summ:todo to handle simple tasks: analyze → confirm → execute → verify.
-
-**Use for:**
-- Simple fixes (typos, renames, small logic changes)
-- Small features (add loading state, simple validation)
-- Setup tasks (install dependencies, configure tools)
-- Clear bug fixes with known solutions
-
-**NOT for:**
-- New features requiring architecture decisions
-- Multi-system changes affecting many files
-- Tasks where the approach is unclear
+Invoke the summ:todo skill and follow it exactly as presented to you
