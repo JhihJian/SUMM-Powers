@@ -1,5 +1,5 @@
 ---
-name: todo
+name: to-do-it
 description: Use when executing small, logically straightforward tasks that don't require design docs or detailed plans. Quick analyze-confirm-execute cycle for simple fixes, small features, or setup tasks.
 ---
 
