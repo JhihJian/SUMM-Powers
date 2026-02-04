@@ -72,7 +72,18 @@ Complexity: simple/medium/complex
 - **Simple/medium:** "Does this look right? Should I proceed?"
 - **Complex:** "This task is somewhat complex. Do you want to proceed directly or use /summ:writing-plans for a structured approach?"
 
-On confirmation: create TodoWrite and one TaskWarrior task
+On confirmation:
+1. Create TodoWrite for step tracking
+2. **Invoke Skill tool with `summ:taskwarrior` to create a tracking task**
+
+### Step 2.5: Create TaskWarrior Task
+
+Use the Skill tool to invoke `summ:taskwarrior` and create a global tracking task:
+- Description: brief summary of the todo task
+- Project: auto-detected from git repo
+- Tags: +todo
+
+This ensures the task is tracked globally even if the conversation is interrupted.
 
 ### Step 3: Execute
 
@@ -88,8 +99,8 @@ For each todo:
    - Setup: verify installation works
    - Configuration: verify config is applied
 2. Summarize what was changed
-3. Clear TodoWrite list
-4. Mark TaskWarrior task done
+3. **Invoke Skill tool with `summ:taskwarrior` to mark the tracking task done**
+4. Clear TodoWrite list
 
 ## TaskWarrior Integration
 
