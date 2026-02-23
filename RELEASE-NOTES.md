@@ -1,18 +1,28 @@
 # SUMM Release Notes
 
+## v1.0.7 (2026-02-23)
+
+### Fixes
+
+**Design principles 从独立文件改为内联**
+
+v1.0.6 错误地将设计原则放在 `docs/design-principles.md`，技能系统无法读取 `skills/` 外的文件。现在将三条原则直接内联到各设计类技能中。
+
+### Files Changed
+- Deleted: `docs/design-principles.md`
+- Updated: `skills/brainstorming/SKILL.md` — 内联三条原则到 Key Principles
+- Updated: `skills/writing-plans/SKILL.md` — 内联三条原则到 Remember
+- Updated: `skills/to-do-it/SKILL.md` — 内联三条原则到 Analyze 阶段
+
+---
+
 ## v1.0.6 (2026-02-23)
 
 ### New Features
 
-**Design Principles 共享文件**
+**Design Principles（源自 terminus-kira）**
 
-新增 `docs/design-principles.md`，定义设计阶段三条核心原则（源自 terminus-kira 项目）：
-
-1. **Generalization Rule** — 解决方案必须通用，禁止硬编码
-2. **Replanning Guidance** — 发现方向错误时允许推翻重新规划
-3. **Lightweight First** — 优先选择最简单的能解决问题的方案
-
-`brainstorming` 和 `writing-plans` 技能现在引用此文件作为方案评估标准。
+三条设计阶段核心原则：Generalization（禁止硬编码）、Replanning（允许重新规划）、Lightweight First（轻量级优先）。
 
 **Verification 技能增强**
 
@@ -24,14 +34,14 @@
 ### Design
 
 按角色分层集成：
-- **设计者**（brainstorming、writing-plans）→ 引用共享原则文件
+- **设计者**（brainstorming、writing-plans、to-do-it）→ 内联设计原则
 - **执行者**（所有执行流程）→ 通过 verification-before-completion 门控注入不可逆提交框架
 
 ### Files Changed
-- New: `docs/design-principles.md`
 - Updated: `skills/verification-before-completion/SKILL.md` (+20 lines)
-- Updated: `skills/brainstorming/SKILL.md` (+1 line)
-- Updated: `skills/writing-plans/SKILL.md` (+1 line)
+- Updated: `skills/brainstorming/SKILL.md`
+- Updated: `skills/writing-plans/SKILL.md`
+- Updated: `skills/to-do-it/SKILL.md`
 
 ---
 

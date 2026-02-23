@@ -33,6 +33,11 @@ Violating the letter = violating the spirit. TaskWarrior is mandatory, period.
 ### 1. Analyze
 Read relevant files, ask questions until clear, assess complexity (simple/medium/complex).
 
+**Design principles（设计阶段遵守）：**
+- Generalization — 方案必须通用，禁止硬编码
+- Allow replanning — 发现方向错误时推翻重新规划
+- Lightweight first — 优先最简单的方案
+
 ### 2. Confirm
 Present plan to user:
 ```
