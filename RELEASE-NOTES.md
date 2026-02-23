@@ -1,4 +1,39 @@
-# Superpowers Release Notes
+# SUMM Release Notes
+
+## v1.0.6 (2026-02-23)
+
+### New Features
+
+**Design Principles 共享文件**
+
+新增 `docs/design-principles.md`，定义设计阶段三条核心原则（源自 terminus-kira 项目）：
+
+1. **Generalization Rule** — 解决方案必须通用，禁止硬编码
+2. **Replanning Guidance** — 发现方向错误时允许推翻重新规划
+3. **Lightweight First** — 优先选择最简单的能解决问题的方案
+
+`brainstorming` 和 `writing-plans` 技能现在引用此文件作为方案评估标准。
+
+**Verification 技能增强**
+
+`verification-before-completion` 新增两个 section：
+
+- **Irreversible Submission（不可逆提交）** — 将完成声明视为不可逆操作，防止提交半成品期待反馈的"助手行为"
+- **Multi-Perspective Check（多角度检查）** — 完成前从测试工程师、QA、用户三个角度快速审视
+
+### Design
+
+按角色分层集成：
+- **设计者**（brainstorming、writing-plans）→ 引用共享原则文件
+- **执行者**（所有执行流程）→ 通过 verification-before-completion 门控注入不可逆提交框架
+
+### Files Changed
+- New: `docs/design-principles.md`
+- Updated: `skills/verification-before-completion/SKILL.md` (+20 lines)
+- Updated: `skills/brainstorming/SKILL.md` (+1 line)
+- Updated: `skills/writing-plans/SKILL.md` (+1 line)
+
+---
 
 ## v4.1.0 (2026-01-23)
 

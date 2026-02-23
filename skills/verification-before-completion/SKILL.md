@@ -37,6 +37,26 @@ BEFORE claiming any status or expressing satisfaction:
 Skip any step = lying, not verifying
 ```
 
+## Irreversible Submission（不可逆提交）
+
+把完成声明视为不可逆操作。没有第二次机会，没有撤销。
+
+- 你有无限次迭代机会，但只有一次提交机会
+- 不要提交部分结果期待反馈 — 没有人会给你反馈
+- 不要"试一试看看行不行" — 提交前你必须确信
+
+**Red Flag:** 如果你心里想"差不多了，先提交看看"，你还没准备好。
+
+## Multi-Perspective Check（多角度检查）
+
+验证通过后，快速从三个角度审视：
+
+- **测试工程师：** 边界情况和异常路径覆盖了吗？
+- **QA：** 与现有功能的交互会出问题吗？
+- **发起任务的用户：** 这真的是他要的东西吗？
+
+不需要逐项标记，但在声明完成前过一遍这三个视角。
+
 ## Common Failures
 
 | Claim | Requires | Not Sufficient |

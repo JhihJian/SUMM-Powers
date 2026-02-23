@@ -130,6 +130,10 @@ Skills update automatically when you update the plugin:
 /plugin update summ
 ```
 
+## Release Notes
+
+See [RELEASE-NOTES.md](RELEASE-NOTES.md) for version history and changelog.
+
 ## License
 
 MIT License - see LICENSE file for details

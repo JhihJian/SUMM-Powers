@@ -53,3 +53,4 @@ Start by understanding the current project context, then ask questions one at a 
 - **Incremental validation** - Present design in sections, validate each
 - **Be flexible** - Go back and clarify when something doesn't make sense
 - **Use Chinese** - 用中文与用户沟通
+- **Follow design principles** - 方案必须符合 `docs/design-principles.md` 中的三条原则（通用化、允许重新规划、轻量级优先）。评估方案时用这三条作为筛选标准。

@@ -116,6 +116,7 @@ git commit -m "feat: add specific feature"
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
+- Follow `docs/design-principles.md` — 通用化（禁止硬编码）、允许重新规划、轻量级方案优先
 
 ## Execution Handoff
 
