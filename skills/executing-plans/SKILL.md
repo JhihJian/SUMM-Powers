@@ -13,11 +13,11 @@ Load plan, review critically, execute tasks in batches, report for review betwee
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
-**OPTIONAL SUB-SKILL:** Use summ:taskwarrior to track execution progress
+**OPTIONAL SUB-SKILL:** Use summ:summ-todo to track execution progress
 
 ## Task Tracking
 
-When tracking with TaskWarrior:
+When tracking with SUMM-Todo:
 
 ```bash
 # Get project and plan identifiers
@@ -28,17 +28,17 @@ PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1
 
 # Create a task for each Task in the plan
 for TASK_NAME in "Task 1: ..." "Task 2: ..." "Task 3: ..."; do
-  task add project:$PROJECT +execute +plan:$PLAN_FILE "$TASK_NAME"
+  todo add "$TASK_NAME" --pri medium --tag execute --tag plan:$PLAN_FILE
 done
 
-# Start working on a task
-task $UUID start
+# Claim next task
+todo next --tag execute
 
 # Complete when done
-task $UUID done
+todo done <id> -m "Task completed with result"
 ```
 
-**Keep it simple:** One TaskWarrior task per plan Task. No dependencies, no parent/child relationships.
+**Keep it simple:** One SUMM-Todo task per plan Task. No dependencies, no parent/child relationships.
 
 ## The Process
 

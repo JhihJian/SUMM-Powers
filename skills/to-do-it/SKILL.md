@@ -11,9 +11,9 @@ Execute small, clear tasks: analyze → confirm → execute → verify. Skip bra
 
 **Core principle:** Fast execution for straightforward tasks without overhead.
 
-**IRON LAW: NO EXECUTION WITHOUT TASKWARRIOR TASK FIRST.**
+**IRON LAW: NO EXECUTION WITHOUT SUMM-TODO TASK FIRST.**
 
-Violating the letter = violating the spirit. TaskWarrior is mandatory, period.
+Violating the letter = violating the spirit. SUMM-Todo is mandatory, period.
 
 ## When to Use
 
@@ -50,30 +50,31 @@ Complexity: simple/medium/complex
 - **Complex:** "This is complex. Proceed directly or use /summ:writing-plans?"
 
 **On confirmation - MANDATORY ORDER:**
-1. **Create TaskWarrior task** - Invoke `summ:taskwarrior` (description, project, tags: +todo). Save task ID.
-2. **Create TodoWrite** - Track execution steps
+1. **Create SUMM-Todo task** - `todo add "Task title" --pri <high|medium|low> --tag todo`. Save task ID.
+2. **Start the task** - `todo start <id>` or `todo next --tag todo`
+3. **Create TodoWrite** - Track execution steps
 
-**NO EXCEPTIONS:** Not for "simple tasks", "quick fixes", "TodoWrite is enough", or "I'll add later". TaskWarrior FIRST.
+**NO EXCEPTIONS:** Not for "simple tasks", "quick fixes", "TodoWrite is enough", or "I'll add later". SUMM-Todo FIRST.
 
 ### 3. Execute
 For each todo: mark in_progress → execute → mark completed
 
 ### 4. Verify and Complete
 1. Verify (tests/build/lint for code, installation for setup, config applied)
-2. **Mark TaskWarrior done** - Invoke `summ:taskwarrior` with saved ID (BLOCKING: cannot clear TodoWrite until done)
+2. **Mark SUMM-Todo done** - `todo done <id> -m "Result of task"` (BLOCKING: cannot clear TodoWrite until done)
 3. Summarize changes
 4. Clear TodoWrite
 
 ## Red Flags - You're Rationalizing
 
 **STOP if thinking:**
-- "Too simple for TaskWarrior"
+- "Too simple for SUMM-Todo"
 - "TodoWrite is sufficient"
 - "I'll add it later"
 - "Just this once"
 - "Forgot task ID, skip marking done"
 
-**All mean: You're violating the skill. Use TaskWarrior.**
+**All mean: You're violating the skill. Use SUMM-Todo.**
 
 ## When to Upgrade
 
@@ -90,13 +91,13 @@ Stop and suggest summ:writing-plans when:
 | Creating design docs/plan files | Don't. This skill skips docs intentionally |
 | Over-analyzing | Read what's needed, confirm, execute |
 | Skipping verification | Always verify before completing |
-| **Starting before TaskWarrior** | **STOP. Create TaskWarrior first.** |
-| **"TodoWrite is enough"** | **Both required. TodoWrite = session, TaskWarrior = global.** |
-| **Not marking TaskWarrior done** | **Search for task if forgot ID. Never skip.** |
+| **Starting before SUMM-Todo** | **STOP. Create SUMM-Todo task first.** |
+| **"TodoWrite is enough"** | **Both required. TodoWrite = session, SUMM-Todo = global.** |
+| **Not marking SUMM-Todo done** | **Search for task if forgot ID. Never skip.** |
 
 ## Integration
 
-**Required:** `summ:taskwarrior` - Global task tracking (CRITICAL: always use)
+**Required:** `summ:summ-todo` - Global task tracking (CRITICAL: always use)
 
 **Optional:** `summ:systematic-debugging`, `summ:verification-before-completion`
 

@@ -102,7 +102,7 @@ Check that commands appear:
 **Meta**
 - **writing-skills** - Create new skills following best practices (includes testing methodology)
 - **using-summ** - Introduction to the skills system
-- **taskwarrior** - Task tracking integration for plan writing and execution
+- **summ-todo** - SUMM-Todo integration for task tracking during plan writing and execution
 
 ## Philosophy
 

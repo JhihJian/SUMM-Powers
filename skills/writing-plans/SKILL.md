@@ -7,21 +7,21 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 ## Overview
 
-Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+Write comprehensive implementation plans assuming that engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
-**Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
+**Announce at start:** "I'm using the writing-plans skill to create an implementation plan."
 
 **Context:** This should be run in a dedicated worktree (created by brainstorming skill).
 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 
-**OPTIONAL SUB-SKILL:** Use summ:taskwarrior to track plan writing progress
+**OPTIONAL SUB-SKILL:** Use summ:summ-todo to track plan writing progress
 
 ## Task Tracking
 
-When tracking with TaskWarrior:
+When tracking with SUMM-Todo:
 
 ```bash
 # Get project name
@@ -31,22 +31,22 @@ PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1
   echo "summ-plans")
 
 # Create plan task before writing
-TASK_ID=$(task add project:$PROJECT +plan +plan:$PLAN_FILE "Write plan: <title>" | grep -oP 'Created task \K\d+')
+TASK_ID=$(todo add "Write plan: <title>" --pri medium --tag plan)
 
 # Start writing
-task $TASK_ID start
+todo start $TASK_ID
 
 # Complete when plan is saved
-task $TASK_ID done
+todo done $TASK_ID -m "Plan saved to docs/plans/$PLAN_FILE.md"
 ```
 
 ## Bite-Sized Task Granularity
 
 **Each step is one action (2-5 minutes):**
-- "Write the failing test" - step
+- "Write failing test" - step
 - "Run it to make sure it fails" - step
-- "Implement the minimal code to make the test pass" - step
-- "Run the tests and make sure they pass" - step
+- "Implement minimal code to make test pass" - step
+- "Run tests and make sure they pass" - step
 - "Commit" - step
 
 ## Plan Document Header
@@ -77,7 +77,7 @@ task $TASK_ID done
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
 
-**Step 1: Write the failing test**
+**Step 1: Write failing test**
 
 ```python
 def test_specific_behavior():
