@@ -26,9 +26,12 @@ PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1
   basename "$(git rev-parse --show-toplevel 2>/dev/null)" || \
   echo "summ-plans")
 
-# Create a task for each Task in the plan
+# Ensure project exists
+todo project show "$PROJECT" 2>/dev/null || todo project add "$PROJECT" -d "Project tasks"
+
+# Create a task for each Task in the plan (with project prefix)
 for TASK_NAME in "Task 1: ..." "Task 2: ..." "Task 3: ..."; do
-  todo add "$TASK_NAME" --pri medium --tag execute --tag plan:$PLAN_FILE
+  todo add "$PROJECT: $TASK_NAME" --pri medium --tag execute --tag plan:$PLAN_FILE
 done
 
 # Claim next task

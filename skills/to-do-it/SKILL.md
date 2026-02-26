@@ -50,9 +50,11 @@ Complexity: simple/medium/complex
 - **Complex:** "This is complex. Proceed directly or use /summ:writing-plans?"
 
 **On confirmation - MANDATORY ORDER:**
-1. **Create SUMM-Todo task** - `todo add "Task title" --pri <high|medium|low> --tag todo`. Save task ID.
-2. **Start the task** - `todo start <id>` or `todo next --tag todo`
-3. **Create TodoWrite** - Track execution steps
+1. **Get project name** - `PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1#p' || basename "$(git rev-parse --show-toplevel 2>/dev/null)" || echo "summ-plans")`
+2. **Ensure project exists** - `todo project show "$PROJECT" 2>/dev/null || todo project add "$PROJECT" -d "Project tasks"`
+3. **Create SUMM-Todo task** - `todo add "$PROJECT: Task title" --pri <high|medium|low> --tag todo`. Save task ID.
+4. **Start the task** - `todo start <id>` or `todo next --tag todo`
+5. **Create TodoWrite** - Track execution steps
 
 **NO EXCEPTIONS:** Not for "simple tasks", "quick fixes", "TodoWrite is enough", or "I'll add later". SUMM-Todo FIRST.
 
@@ -94,6 +96,7 @@ Stop and suggest summ:writing-plans when:
 | **Starting before SUMM-Todo** | **STOP. Create SUMM-Todo task first.** |
 | **"TodoWrite is enough"** | **Both required. TodoWrite = session, SUMM-Todo = global.** |
 | **Not marking SUMM-Todo done** | **Search for task if forgot ID. Never skip.** |
+| **Forgetting project prefix** | **Always use "ProjectName: task title" format.** |
 
 ## Integration
 

@@ -9,7 +9,9 @@ description: Use when tracking development tasks with SUMM-Todo CLI during plan 
 
 Track plan writing and execution progress with SUMM-Todo CLI tasks. Designed as a sub-skill for summ:writing-plans and summ:executing-plans.
 
-## Get Project Name
+**IRON LAW: Every task MUST have a project.**
+
+## Get Default Project Name
 
 ```bash
 PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1#p' || \
@@ -19,14 +21,25 @@ PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1
 
 Fallback chain: git remote URL → git directory name → `summ-plans`
 
+## Ensure Project Exists
+
+**Before adding tasks, ensure the project exists:**
+
+```bash
+# Check if project exists, create if not
+todo project show "$PROJECT" 2>/dev/null || todo project add "$PROJECT" -d "Project tasks"
+```
+
 ## Quick Reference
 
 | Operation | Command |
 |-----------|---------|
-| Create plan task | `todo add "Write plan: <title>" --pri medium --tag plan` |
+| Create project | `todo project add <name> [-d "description"]` |
+| List projects | `todo project list` |
+| Create task with project | `todo add "<project>: <title>" --pri medium --tag <tag>` |
 | Start plan task | `todo next --tag plan` or `todo start <id>` |
 | Complete plan task | `todo done <id> -m "Plan saved to docs/plans/<filename>.md"` |
-| Create execution task | `todo add "<task title>" --pri medium --tag execute --tag plan:<plan>` |
+| Create execution task | `todo add "<project>: <title>" --pri medium --tag execute` |
 | Start execution task | `todo next --tag execute` or `todo start <id>` |
 | Complete execution task | `todo done <id> -m "Task completed with result"` |
 
@@ -72,13 +85,15 @@ cancelled  blocked
 
 ## Command Details
 
-### Create Task
+### Create Task (with Project)
 ```bash
-todo add "Task title" \
+# Syntax: "ProjectName: task title"
+todo add "SUMM-Powers: Implement feature X" \
   --pri high|medium|low \
-  --tag <tag> \
-  --tag <another-tag>
+  --tag <tag>
 ```
+
+**Project prefix is REQUIRED.** If no project specified, use default project name from git repo.
 
 ### Claim Next Task
 ```bash
@@ -126,6 +141,7 @@ SUMM-Todo uses **TOON format** by default - token-efficient for LLMs:
 ```toon
 id: "5f9570e3"
 title: "Replace TaskWarrior with SUMM-Todo"
+project_id: "c38a2f77"
 creator: human
 priority: high
 tags[1]: integration
@@ -133,6 +149,14 @@ status: in_progress
 ```
 
 Use `todo --json list` for JSON output if needed for scripts.
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Forgetting project prefix | Always use `"ProjectName: task title"` format |
+| Project doesn't exist | Create project first: `todo project add <name>` |
+| Using project flag | No `--project` flag exists; use prefix syntax only |
 
 ## Integration
 

@@ -24,14 +24,17 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 When tracking with SUMM-Todo:
 
 ```bash
-# Get project name
+# Get project name (default from git repo)
 PLAN_FILE=$(basename "$PLAN_PATH" .md)
 PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1#p' || \
   basename "$(git rev-parse --show-toplevel 2>/dev/null)" || \
   echo "summ-plans")
 
-# Create plan task before writing
-TASK_ID=$(todo add "Write plan: <title>" --pri medium --tag plan)
+# Ensure project exists
+todo project show "$PROJECT" 2>/dev/null || todo project add "$PROJECT" -d "Project tasks"
+
+# Create plan task before writing (with project prefix)
+TASK_ID=$(todo add "$PROJECT: Write plan - <title>" --pri medium --tag plan)
 
 # Start writing
 todo start $TASK_ID
