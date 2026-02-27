@@ -95,6 +95,26 @@ todo add "SUMM-Powers: Implement feature X" \
 
 **Project prefix is REQUIRED.** If no project specified, use default project name from git repo.
 
+### Task Title Guidelines
+
+**标题必须有辨识度** - 能一眼看出任务涉及什么模块/功能/问题。
+
+**好标题:** 包含具体上下文（模块名、文件名、功能名、问题类型）
+```
+✓ "summ-todo技能: 添加任务标题辨识度要求"
+✓ "commands/todo.md: 修复无限循环bug"
+✓ "frontend-design: 添加暗色主题支持"
+✓ "API /users/: 删除未使用的字段"
+```
+
+**坏标题:** 模糊、通用、无法区分
+```
+✗ "修复bug"
+✗ "添加功能"
+✗ "更新文档"
+✗ "优化代码"
+```
+
 ### Claim Next Task
 ```bash
 # Claim next pending task (auto-assigns to agent)
