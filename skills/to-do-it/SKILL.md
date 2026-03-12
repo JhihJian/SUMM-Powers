@@ -98,6 +98,13 @@ Stop and suggest summ:writing-plans when:
 | **Not marking SUMM-Todo done** | **Search for task if forgot ID. Never skip.** |
 | **Forgetting project prefix** | **Always use "ProjectName: task title" format.** |
 
+## Key Principles
+
+- **用中文与用户沟通** - 理解和确认都用中文进行
+- **Generalization** - 方案必须通用，禁止硬编码
+- **Allow replanning** - 发现方向错误时推翻重新规划
+- **Lightweight first** - 优先最简单的方案
+
 ## Integration
 
 **Required:** `summ:summ-todo` - Global task tracking (CRITICAL: always use)
