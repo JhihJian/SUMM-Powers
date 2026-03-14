@@ -1,5 +1,62 @@
 # SUMM Release Notes
 
+## v5.0.2-summ.1.1 (2026-03-14)
+
+### Upstream Sync
+
+Synced with [obra/superpowers](https://github.com/obra/superpowers) v5.0.2. Key upstream changes adopted:
+
+**Zero-Dependency Brainstorm Server**
+- Upstream replaced Express/Chokidar/WebSocket with zero-dependency Node.js server
+- Custom WebSocket protocol implementation (RFC 6455)
+- Auto-exit after 30 minutes idle
+
+**Subagent Context Isolation**
+- All delegation skills now include context isolation principle
+- Subagents receive only the context they need
+
+**Brainstorm Server Reliability**
+- Owner process tracking - server exits when owning session dies
+- Liveness check before reusing existing instance
+
+**Spec Review Loop**
+- Brainstorming skill now includes spec review step in checklist and flow diagram
+
+### Conflicts Resolved
+
+| File | Decision |
+|------|----------|
+| `.codex/*`, `.opencode/*` | Kept deleted (SUMM focuses on Claude Code only) |
+| `hooks/session-start.sh` | Kept SUMM version (upstream deleted this file) |
+| `skills/executing-plans/SKILL.md` | Merged upstream context isolation + SUMM-Todo integration |
+| `skills/writing-plans/SKILL.md` | Merged upstream changes + SUMM-Todo integration |
+| `README.md` | Kept SUMM-specific installation instructions |
+
+### Version Numbering Change
+
+Adopted new version format: `v<upstream-version>-summ.<custom-version>`
+- Example: `v5.0.2-summ.1.1` = upstream v5.0.2 + SUMM custom version 1.1
+- Both version numbers evolve independently
+
+### Files Changed
+- Updated: `.claude-plugin/plugin.json` - New version format
+- Updated: `.claude-plugin/marketplace.json` - New version format
+- Updated: `README.md` - Added "About This Fork" section
+- Updated: Multiple skills with upstream improvements
+- New: `docs/plans/2026-03-14-upstream-sync-workflow-design.md` - Sync workflow documentation
+
+---
+
+## v1.0.9 (2026-02-xx)
+
+### New Features
+
+**SUMM-Todo Project Support**
+
+SUMM-Todo integration now supports project-specific task tracking via the `project` field.
+
+---
+
 ## v1.0.7 (2026-02-23)
 
 ### Fixes

@@ -4,142 +4,102 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 ---
 
 # Writing Plans
-
 ## Overview
+Write comprehensive implementation plans assuming that engineer has zero context in our codebase and questionable taste. Document everything they need to know: which files to touch in each task, code, testing. docs that might need to check, how to test. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
 
-Write comprehensive implementation plans assuming that engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+Assume you are a skilled developer, but know almost nothing about our toolset or problem domain. Assume that don't know good test design very well.
 
-Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
+**Announce at start:** "I'm using the writing-plans skill to create an implementation plan"
 
-**Announce at start:** "I'm using the writing-plans skill to create an implementation plan."
+**Context:** This should be run in a dedicated worktree (created by brainstorming skill)
 
-**Context:** This should be run in a dedicated worktree (created by brainstorming skill).
+**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
+- (User preferences for plan location override this default)
 
-**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
+## Scope Check
+If the spec covers multiple independent subsystems, should have been broken into sub-project specs during brainstorming. If I wasn't, suggest breaking this into separate plans — 1 per subsystem. Each plan should produce working, testable software on its own.
+
+## File Structure
+Before defining tasks, map out which files will be created or modified and what each one is responsible for. This is where decomposition decisions get locked in.
+
+- Design units with clear boundaries and well-defined interfaces. Each file should have one clear responsibility
+- Files should be small enough to hold in context at once
+- Files that change together should live together. Split by responsibility, not by technical layers.
+- In existing codebases, follow established patterns. If the codebase uses large files, don't unilaterally restructure - only if a file you're modifying has grown unwieldy, including a split in the plan, reasonable.
+
+This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.
 
 **OPTIONAL SUB-SKILL:** Use summ:summ-todo to track plan writing progress
 
 ## Task Tracking
-
 When tracking with SUMM-Todo:
 
 ```bash
 # Get project name (default from git repo)
 PLAN_FILE=$(basename "$PLAN_PATH" .md)
-PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#\1#p' || \
+PROJECT=$(git remote get-url origin 2>/dev/null | sed -n 's#.*/\([^/]*\)\.git#1#p' || \
   basename "$(git rev-parse --show-toplevel 2>/dev/null)" || \
   echo "summ-plans")
 
 # Ensure project exists
 todo project show "$PROJECT" 2>/dev/null || todo project add "$PROJECT" -d "Project tasks"
-
 # Create plan task before writing (with project prefix)
 TASK_ID=$(todo add "$PROJECT: Write plan - <title>" --pri medium --tag plan)
-
 # Start writing
 todo start $TASK_ID
-
 # Complete when plan is saved
 todo done $TASK_ID -m "Plan saved to docs/plans/$PLAN_FILE.md"
 ```
+**Keep it simple:** One SUMM-Todo task per plan Task. No dependencies, no parent/child relationships
 
 ## Bite-Sized Task Granularity
-
-**Each step is one action (2-5 minutes):**
+**Each step is 1 action (2-5 minutes):**
 - "Write failing test" - step
 - "Run it to make sure it fails" - step
 - "Implement minimal code to make test pass" - step
 - "Run tests and make sure they pass" - step
 - "Commit" - step
 
-## Plan Document Header
-
-**Every plan MUST start with this header:**
-
-```markdown
-# [Feature Name] Implementation Plan
-
-> **For Claude:** REQUIRED SUB-SKILL: Use summ:executing-plans to implement this plan task-by-task.
-
-**Goal:** [One sentence describing what this builds]
-
-**Architecture:** [2-3 sentences about approach]
-
-**Tech Stack:** [Key technologies/libraries]
-
----
+## Plan Structure
 ```
-
-## Task Structure
-
-```markdown
+markdown
 ### Task N: [Component Name]
-
-**Files:**
-- Create: `exact/path/to/file.py`
-- Modify: `exact/path/to/existing.py:123-145`
-- Test: `tests/exact/path/to/test.py`
-
-**Step 1: Write failing test**
-
-```python
-def test_specific_behavior():
-    result = function(input)
-    assert result == expected
+Description
+Files
+Tests
+Verification
+---
+### Task 1: Setup & Context
+...
 ```
+Use checkboxes to validate each task and track progress. Present task details after user approval.
 
-**Step 2: Run test to verify it fails**
+## Anti-Pattern: Adding Validation Later
+This is the validation at task-level, not during planning. Only at the end.
 
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
+## Chunk Boundaries
+Each chunk should be self-contained and easy to review (~10-50 lines):
+- One major logical section (scope, architecture, files)
+- One logical section (approach, task breakdown, verification)
+- One technical section (commands, dependencies, env setup)
 
-**Step 3: Write minimal implementation**
+Avoid vague descriptions like "Add tests for X feature" — be specific about what you test
 
-```python
-def function(input):
-    return expected
-```
-
-**Step 4: Run test to verify it passes**
-
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: PASS
-
-**Step 5: Commit**
-
-```bash
-git add tests/path/test.py src/path/file.py
-git commit -m "feat: add specific feature"
-```
-```
+## Key Principles
+- **Exact file paths always** - No "update the corresponding files"
+- **Complete commands always** - No partial implementations
+- **Exact verification commands** - No "run the tests" or "check it it works"
+- **DRY** - Don't repeat code across files
+- **YAGNI** - No speculative features
+- **Generalization** - Solutions must be generic. Ask yourself: "If input changes, will this still work?"
+- **Allow replanning** - When direction is wrong, pivot. Sunk cost is not a reason to continue
+- **Lightweight first** - Prefer the simplest approach. Complexity must be justified by value
+- **Context Isolation** - When dispatching subagents, provide only the context they need
 
 ## Remember
-- Exact file paths always
-- Complete code in plan (not "add validation")
-- Exact commands with expected output
-- Reference relevant skills with @ syntax
-- DRY, YAGNI, TDD, frequent commits
-- Generalization — 方案必须通用，禁止硬编码和 magic number
-- Allow replanning — 发现方向错误时推翻重新规划，沉没成本不是继续的理由
-- Lightweight first — 优先最简单的方案，能用标准库就不引入第三方依赖
+- Plan document lives in the repo, not in your head
+- Plans are executed in isolated worktrees
+- Each task is a single commit
+- Verification commands should be exact and complete
 
-## Execution Handoff
-
-After saving the plan, offer execution choice:
-
-**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
-
-**1. Subagent-Driven (this session)** - I dispatch fresh subagent per task, review between tasks, fast iteration
-
-**2. Parallel Session (separate)** - Open new session with executing-plans, batch execution with checkpoints
-
-**Which approach?"**
-
-**If Subagent-Driven chosen:**
-- **REQUIRED SUB-SKILL:** Use summ:subagent-driven-development
-- Stay in this session
-- Fresh subagent per task + code review
-
-**If Parallel Session chosen:**
-- Guide them to open new session in worktree
-- **REQUIRED SUB-SKILL:** New session uses summ:executing-plans
+- Use `summ:summ-todo` to track progress (optional)

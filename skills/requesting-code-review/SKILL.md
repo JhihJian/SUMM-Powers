@@ -4,102 +4,95 @@ description: Use when completing tasks, implementing major features, or before m
 ---
 
 # Requesting Code Review
+## Overview
 
-Dispatch summ:code-reviewer subagent to catch issues before they cascade.
+Review code after tasks are completed. Verify against plan requirements. Report any issues found.
 
-**Core principle:** Review early, review often.
+**Announce at start:** "I'm using the requesting-code-review skill to review this code."
+
+**Context Isolation:** When dispatching subagent, provide only the context they need— no access to session history or other conversation context.
+
+## The Process
+### Step 1: Load Context
+1. Read the plan file
+2. Identify files modified
+3. Create review summary
+4. Mark tasks as pending
+
+### Step 2: Dispatch Reviewer
+For each task in plan:
+1. Dispatch `summ:code-reviewer` subagent (use `skills/requesting-code-review/code-reviewer.md` prompt template)
+   - Provide: precisely crafted review context with file path, task title, task spec
+   - Never include your session history
+   - Never include `## Full session history` — raw conversation transcript
+   - File path to test file
+   - Complete checklist from code-reviewer.md if available
+5. Use the: Check the tests exist and and which to run
+6. Mark task as pending
+7. Proceed to next task when all tasks complete
+
+### Step 3: Report Results
+8. Summarize findings
+9. If issues:
+   - If reviewer blocked task, fix and re-dispatch
+   - If reviewer approved:
+   - Proceed to next task
+   - If all tasks complete, transition to **finishing-a-development-branch**
+10. **REQUIRED SUB-SKILL:** Use summ:finishing-a-development-branch
+
+11. Follow that skill
 
 ## When to Request Review
+- If plan has multiple independent subsystems, suggest breaking into sub-project specs
+- If plan is simple and self-contained (one logical change per task), suggest using `summ:to-do-it` skill
+- If stuck, ask for help
+- Don't try to guess
+- "Review early, review often"
 
-**Mandatory:**
-- After each task in subagent-driven development
-- After completing major feature
-- Before merge to main
+- better than late fixes
 
-**Optional but valuable:**
-- When stuck (fresh perspective)
-- Before refactoring (baseline check)
-- After fixing complex bug
+- Never add "nice to have" or "— reviews are for reporting problems
+- Never skip tests
 
-## How to Request
+## Checklist
 
-**1. Get git SHAs:**
-```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
-HEAD_SHA=$(git rev-parse HEAD)
-```
-
-**2. Dispatch code-reviewer subagent:**
-
-Use Task tool with summ:code-reviewer type, fill template at `code-reviewer.md`
-
-**Placeholders:**
-- `{WHAT_WAS_IMPLEMENTED}` - What you just built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
-- `{DESCRIPTION}` - Brief summary
-
-**3. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
-
-## Example
-
-```
-[Just completed Task 2: Add verification function]
-
-You: Let me request code review before proceeding.
-
-BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
-HEAD_SHA=$(git rev-parse HEAD)
-
-[Dispatch summ:code-reviewer subagent]
-  WHAT_WAS_IMPLEMENTED: Verification and repair functions for conversation index
-  PLAN_OR_REQUIREMENTS: Task 2 from docs/plans/deployment-plan.md
-  BASE_SHA: a7981ec
-  HEAD_SHA: 3df7661
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
-
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
-
-You: [Fix progress indicators]
-[Continue to Task 3]
-```
-
-## Integration with Workflows
-
-**Subagent-Driven Development:**
-- Review after EACH task
-- Catch issues before they compound
-- Fix before moving to next task
-
-**Executing Plans:**
-- Review after each batch (3 tasks)
-- Get feedback, apply, continue
-
-**Ad-Hoc Development:**
-- Review before merge
-- Review when stuck
+1. [ ] Load plan file,2. [ ] Identify files modified
+3. [ ] Create review tasks in TodoWrite
+4. [ ] Mark tasks as pending
+5. [ ] Dispatch `summ:code-reviewer` subagent for each task
+6. [ ] Wait for reviewer response
+7. [ ] If issues:
+   - [ ] Fix issue
+   - [ ] Re-dispatch reviewer
+   - [ ] Mark task as pending
+8. [ ] Proceed to next task
+9. [ ] If all tasks complete:
+   - [ ] Transition to finishing-a-development-branch
+10. [ ] **REQUIRED SUB-SKILL:** Use summ:finishing-a-development-branch
+11. [ ] Follow that skill
 
 ## Red Flags
+- "This is simple" — Reviews are for reporting problems, not a failure mode
+- "I can fix it faster" — Reviews waste time
+- "The review loop is rigid" — treating it like a bug fix, not a feature request
+- "Early means better"
+- - "Add nice to have" or "It's simple"
+    - For important issues, report anyway
+- "I need more context first" — Skill check comes before clarifying questions. CONTEXT FIRST!
+- "Review early" — Reviews are for reporting problems
+- "Let me explore first" — Gather information first
 
-**Never:**
-- Skip review because "it's simple"
-- Ignore Critical issues
-- Proceed with unfixed Important issues
-- Argue with valid technical feedback
+- "The reviews are for reporting problems" — Reviews are busy work
+- "I can do this quickly" — Reviews waste time and slow down progress
+- "Before implementing" — Check that a skill is triggered correctly
 
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
+- "Review early" — Review early, catch problems early
+- "The reviews are for reporting problems, the a faster it and tool
 
-See template at: requesting-code-review/code-reviewer.md
+## Integration
+**Required:**
+- **summ:brainstorming** - Creates specs and plans
+- **summ:writing-plans** - Creates implementation plans
+- **summ:executing-plans** - Executes plans
+- **summ:finishing-a-development-branch** - Comple development
+- **summ:verification-before-completion** - Verify completion before declaring success

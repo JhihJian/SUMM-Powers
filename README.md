@@ -2,6 +2,13 @@
 
 SUMM is a complete software development workflow for your coding agents, built on top of a set of composable "skills" and some initial instructions that make sure your agent uses them.
 
+## About This Fork
+
+This is a customized fork of [obra/superpowers](https://github.com/obra/superpowers) with SUMM-Todo integration.
+
+- Upstream version: v5.0.2
+- SUMM version: v5.0.2-summ.1.1
+
 ## How it works
 
 It starts from the moment you fire up your coding agent. As soon as it sees that you're building something, it *doesn't* just jump into trying to write code. Instead, it steps back and asks you what you're really trying to do.
@@ -46,13 +53,9 @@ Then install the plugin from this marketplace:
 
 ### Verify Installation
 
-Check that commands appear:
+Start a new session and ask for something that should trigger a skill (for example, "help me plan this feature" or "let's debug this issue"). The agent should automatically invoke the relevant skill.
 
 ```bash
-/help
-```
-
-```
 # Should see:
 # /summ:brainstorm - Interactive design refinement
 # /summ:write-plan - Create implementation plan
