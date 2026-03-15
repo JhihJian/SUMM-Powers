@@ -7,7 +7,7 @@ SUMM is a complete software development workflow for your coding agents, built o
 This is a customized fork of [obra/superpowers](https://github.com/obra/superpowers) with SUMM-Todo integration.
 
 - Upstream version: v5.0.2
-- SUMM version: v5.0.2-summ.1.1
+- SUMM version: v5.0.2-summ.1.2
 
 ## How it works
 
