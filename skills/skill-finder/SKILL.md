@@ -30,21 +30,59 @@ description: Use when encountering complex or specialized work that requires dom
 
 ## Configuration
 
-技能查找器需要配置 antigravity-awesome-skills 的本地路径：
+### 路径配置（按优先级）
 
-```
-ANTIGRAVITY_SKILLS_PATH: /data/github/antigravity-awesome-skills
-ANTIGRAVITY_SKILLS_REPO: https://github.com/sickn33/antigravity-awesome-skills
+1. **环境变量**（最高优先级）：
+   ```bash
+   export ANTIGRAVITY_SKILLS_PATH=/path/to/antigravity-awesome-skills
+   ```
+
+2. **常见路径自动检测**：
+   - `$HOME/github/antigravity-awesome-skills`
+   - `$HOME/projects/antigravity-awesome-skills`
+   - `$HOME/.claude/antigravity-awesome-skills`
+
+3. **自动克隆**（如果以上都没有）：
+   ```bash
+   git clone https://github.com/sickn33/antigravity-awesome-skills ~/.claude/antigravity-awesome-skills
+   ```
+
+### 获取路径的方法
+
+```bash
+# 优先使用环境变量
+SKILLS_PATH="${ANTIGRAVITY_SKILLS_PATH:-}"
+
+# 如果没有设置，尝试常见路径
+if [ -z "$SKILLS_PATH" ]; then
+  for path in "$HOME/github/antigravity-awesome-skills" "$HOME/projects/antigravity-awesome-skills" "$HOME/.claude/antigravity-awesome-skills"; do
+    if [ -d "$path" ]; then
+      SKILLS_PATH="$path"
+      break
+    fi
+  done
+fi
+
+# 如果还是没有，自动克隆
+if [ -z "$SKILLS_PATH" ]; then
+  git clone https://github.com/sickn33/antigravity-awesome-skills "$HOME/.claude/antigravity-awesome-skills"
+  SKILLS_PATH="$HOME/.claude/antigravity-awesome-skills"
+fi
+
+echo "Using skills path: $SKILLS_PATH"
 ```
 
 ## The Process
 
-### 1. Update Repository
+### 1. Setup / Update Repository
 
-首先更新 antigravity-awesome-skills 仓库以获取最新技能：
+首先检测并更新 antigravity-awesome-skills 仓库：
 
 ```bash
-cd /data/github/antigravity-awesome-skills && git pull origin main
+# 检测路径（按上述配置逻辑）
+# 假设检测到路径为 $SKILLS_PATH
+
+cd "$SKILLS_PATH" && git pull origin main
 ```
 
 ### 2. Search Skills Index
@@ -82,11 +120,12 @@ cd /data/github/antigravity-awesome-skills && git pull origin main
 用户选择后，将技能复制到 `external-skills/` 目录：
 
 ```bash
-# 源路径
-SOURCE: /data/github/antigravity-awesome-skills/skills/<skill-id>/
+# 源路径（使用检测到的 SKILLS_PATH）
+SOURCE="$SKILLS_PATH/skills/<skill-id>/"
 
-# 目标路径
-TARGET: /data/dev/SUMM-Powers/external-skills/<skill-id>/
+# 目标路径（相对于当前 SUMM-Powers 插件目录）
+# 可通过环境变量 SUMM_POWERS_PATH 配置，默认为插件安装位置
+TARGET="${SUMM_POWERS_PATH:-.}/external-skills/<skill-id>/"
 
 # 复制命令
 cp -r "$SOURCE" "$TARGET"
@@ -140,15 +179,17 @@ summ:external:<skill-id>
 ```
 
 **执行流程**：
-1. git pull 更新仓库
-2. 搜索 skills_index.json
-3. 找到匹配：007, security-audit, pentest-guide...
-4. 展示结果，用户选择 #1 (007)
-5. 复制到 external-skills/007/
-6. 提示：使用 `summ:external:007` 调用
+1. 检测/克隆 antigravity-awesome-skills 仓库
+2. git pull 更新仓库
+3. 搜索 skills_index.json
+4. 找到匹配：007, security-audit, pentest-guide...
+5. 展示结果，用户选择 #1 (007)
+6. 复制到 external-skills/007/
+7. 提示：使用 `summ:external:007` 调用
 
 ## Key Principles
 
+- **可移植性**：不硬编码路径，支持环境变量配置
 - **安全优先**：展示技能风险级别，提醒用户审慎使用 critical 级别技能
 - **保留技能**：加载的技能保留在 external-skills/ 供后续使用
 - **用中文沟通**：与用户交互使用中文
@@ -158,7 +199,16 @@ summ:external:<skill-id>
 
 | 问题 | 解决方案 |
 |------|----------|
+| 找不到仓库 | 设置 `ANTIGRAVITY_SKILLS_PATH` 环境变量，或允许自动克隆 |
 | git pull 失败 | 检查网络连接，或手动更新仓库 |
 | 找不到匹配技能 | 尝试更通用的关键词，或查看 CATALOG.md |
 | 技能加载失败 | 检查源技能目录结构是否完整 |
 | 调用技能失败 | 确认技能已正确复制到 external-skills/ |
+| 路径权限问题 | 确保有读写权限，或更换目标目录 |
+
+## Environment Variables
+
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `ANTIGRAVITY_SKILLS_PATH` | antigravity-awesome-skills 仓库路径 | 自动检测或 `~/.claude/antigravity-awesome-skills` |
+| `SUMM_POWERS_PATH` | SUMM-Powers 插件安装路径 | 插件缓存目录 |
