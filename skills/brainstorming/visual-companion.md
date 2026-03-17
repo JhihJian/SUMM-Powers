@@ -70,14 +70,6 @@ When calling this via the Bash tool, set `run_in_background: true`. Then read `$
 scripts/start-server.sh --project-dir /path/to/project
 ```
 
-**Windows (Git Bash / CMD / PowerShell):**
-```bash
-# Windows/Git Bash reaps nohup background processes. The script auto-detects
-# this via OSTYPE/MSYSTEM and switches to foreground mode automatically.
-# No extra flags needed — all Windows shells route through Git Bash.
-scripts/start-server.sh --project-dir /path/to/project
-```
-
 **Gemini CLI:**
 ```bash
 # Use --foreground and set is_background: true on your shell tool call
