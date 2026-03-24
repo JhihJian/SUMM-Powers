@@ -76,8 +76,10 @@ function decodeFrame(buffer) {
 const PORT = process.env.BRAINSTORM_PORT || (49152 + Math.floor(Math.random() * 16383));
 const HOST = process.env.BRAINSTORM_HOST || '127.0.0.1';
 const URL_HOST = process.env.BRAINSTORM_URL_HOST || (HOST === '127.0.0.1' ? 'localhost' : HOST);
-const SCREEN_DIR = process.env.BRAINSTORM_DIR || '/tmp/brainstorm';
-const OWNER_PID = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
+const SESSION_DIR = process.env.BRAINSTORM_DIR || '/tmp/brainstorm';
+const CONTENT_DIR = path.join(SESSION_DIR, 'content');
+const STATE_DIR = path.join(SESSION_DIR, 'state');
+let ownerPid = process.env.BRAINSTORM_OWNER_PID ? Number(process.env.BRAINSTORM_OWNER_PID) : null;
 
 const MIME_TYPES = {
   '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
@@ -309,8 +311,8 @@ function startServer() {
   }
 
   function ownerAlive() {
-    if (!OWNER_PID) return true;
-    try { process.kill(OWNER_PID, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+    if (!ownerPid) return true;
+    try { process.kill(ownerPid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
   }
 
   // Check every 60s: exit if owner process died or idle for 30 minutes
@@ -319,6 +321,19 @@ function startServer() {
     else if (Date.now() - lastActivity > IDLE_TIMEOUT_MS) shutdown('idle timeout');
   }, 60 * 1000);
   lifecycleCheck.unref();
+
+  // Validate owner PID at startup. If it's already dead, the PID resolution
+  // was wrong (common on WSL, Tailscale SSH, and cross-user scenarios).
+  // Disable monitoring and rely on the idle timeout instead.
+  if (ownerPid) {
+    try { process.kill(ownerPid, 0); }
+    catch (e) {
+      if (e.code !== 'EPERM') {
+        console.log(JSON.stringify({ type: 'owner-pid-invalid', pid: ownerPid, reason: 'dead at startup' }));
+        ownerPid = null;
+      }
+    }
+  }
 
   server.listen(PORT, HOST, () => {
     const info = JSON.stringify({
