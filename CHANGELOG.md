@@ -1,15 +1,30 @@
 # Changelog
 
-## Unreleased
+## 5.0.7-summ.1.5 (2026-04-13)
+
+### Upstream Sync (v5.0.4–v5.0.7)
+
+Cherry-picked from [obra/superpowers](https://github.com/obra/superpowers) up to commit `1f20bef`.
 
 ### Fixed
 
-- **Brainstorm server on Windows**: Auto-detect Windows/Git Bash (`OSTYPE=msys*`, `MSYSTEM`) and switch to foreground mode, fixing silent server failure caused by `nohup`/`disown` process reaping. Applies to all Windows shells (CMD, PowerShell, Git Bash) since they all route through Git Bash. (fixes #737, based on #740)
-- **Brainstorm owner-PID on Windows**: Skip `BRAINSTORM_OWNER_PID` lifecycle monitoring on Windows/MSYS2 where the PID namespace is invisible to Node.js. Prevents the server from self-terminating after 60 seconds. The 30-minute idle timeout remains as the safety net. ([#770](https://github.com/obra/superpowers/issues/770))
-- **Portable shebangs**: Replace `#!/bin/bash` with `#!/usr/bin/env bash` in all shell scripts. Fixes execution on NixOS, FreeBSD, and macOS with Homebrew bash. ([#700](https://github.com/obra/superpowers/pull/700))
-- **POSIX-safe hook script**: Replace `${BASH_SOURCE[0]:-$0}` with `$0` in `hooks/session-start`. Fixes 'Bad substitution' error on Ubuntu/Debian where `/bin/sh` is dash. ([#553](https://github.com/obra/superpowers/pull/553))
-- **Bash 5.3+ hook hang**: Replace heredoc with `printf` in `hooks/session-start`. Fixes indefinite hang on macOS with Homebrew bash 5.3+. ([#572](https://github.com/obra/superpowers/pull/572))
+- **Inline self-review**: Replace subagent review loops with lightweight inline self-review. Single-pass plan review with raised issue bar.
+- **Brainstorm server restructure**: Separate content and state into peer directories. Fix owner-PID lifecycle monitoring for cross-platform reliability.
+- **Brainstorm server on Windows**: Auto-detect Windows/Git Bash (`OSTYPE=msys*`, `MSYSTEM`) and switch to foreground mode, fixing silent server failure caused by `nohup`/`disown` process reaping. (fixes #737, based on #740)
+- **Brainstorm owner-PID on Windows**: Skip `BRAINSTORM_OWNER_PID` lifecycle monitoring on Windows/MSYS2 where the PID namespace is invisible to Node.js. ([#770](https://github.com/obra/superpowers/issues/770))
+- **Copilot CLI platform detection**: Add Copilot CLI detection to sessionStart context injection.
 - **stop-server.sh reliability**: Verify the server process actually died before reporting success. Escalates to `SIGKILL` if needed. ([#723](https://github.com/obra/superpowers/issues/723))
+
+### Not Synced (upstream only)
+
+The following upstream fixes exist but are not yet synced to SUMM-Powers:
+
+- Portable shebangs (`#!/usr/bin/env bash`) — [#700](https://github.com/obra/superpowers/pull/700)
+- POSIX-safe hook script (`$0` vs `BASH_SOURCE`) — [#553](https://github.com/obra/superpowers/pull/553)
+- Bash 5.3+ hook hang (`printf` vs heredoc) — [#572](https://github.com/obra/superpowers/pull/572)
+- Cursor-compatible hooks — [#709](https://github.com/obra/superpowers/pull/709)
+- OpenCode plugin auto-register and path fixes
+- SessionStart hook `--resume` fix
 
 ### Known Issues
 

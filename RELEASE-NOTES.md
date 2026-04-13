@@ -1,5 +1,43 @@
 # SUMM Release Notes
 
+## v5.0.7-summ.1.5 (2026-04-13)
+
+### Upstream Sync
+
+Synced with [obra/superpowers](https://github.com/obra/superpowers) up to v5.0.7 (`1f20bef`). Key upstream changes cherry-picked:
+
+**Inline Self-Review (v5.0.6)**
+- Replace subagent review loops with lightweight inline self-review
+- Single-pass plan review with raised issue bar
+
+**Brainstorm Server Restructure (v5.0.6)**
+- Separate brainstorm server content and state into peer directories
+- Fix owner-PID lifecycle monitoring for cross-platform reliability
+- Fix owner-PID false positive when owner runs as different user
+
+**Copilot CLI Support (v5.0.7)**
+- Add Copilot CLI platform detection for sessionStart context injection
+
+**Bug Fixes**
+- Windows brainstorm server lifecycle: restore execution choice
+- Verify server actually stopped in stop-server.sh
+- Auto-foreground brainstorm server on Windows/Git Bash
+
+### Conflicts Resolved
+
+| File | Decision |
+|------|----------|
+| `RELEASE-NOTES.md` | Kept SUMM version |
+| `CHANGELOG.md` | Kept SUMM version |
+| `skills/writing-plans/SKILL.md` | Merged inline self-review + SUMM namespace |
+| `skills/writing-skills/SKILL.md` | Resolved conflict marker, kept SUMM content |
+| `skills/brainstorming/scripts/server.cjs` | Applied upstream restructure + kept mutable ownerPid |
+| `hooks/session-start` | Combined upstream + Copilot CLI detection |
+
+### Sync Anchor
+
+Upstream sync point recorded in `.upstream-sync` for efficient future checks.
+
 ## v5.0.2-summ.1.1 (2026-03-14)
 
 ### Upstream Sync

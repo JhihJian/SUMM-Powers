@@ -1,0 +1,5 @@
+# Upstream sync anchor
+# Last synced: 2026-04-13
+# Upstream repo: https://github.com/obra/superpowers
+# Format: <upstream-commit> <upstream-version>
+1f20bef Release v5.0.7: Copilot CLI support, OpenCode fixes
