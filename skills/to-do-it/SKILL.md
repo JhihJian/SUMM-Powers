@@ -33,18 +33,31 @@ Violating the letter = violating the spirit. SUMM-Todo is mandatory, period.
 ### 1. Analyze
 Read relevant files, ask questions until clear, assess complexity (simple/medium/complex).
 
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
 **Design principles（设计阶段遵守）：**
 - Generalization — 方案必须通用，禁止硬编码
 - Allow replanning — 发现方向错误时推翻重新规划
-- Lightweight first — 优先最简单的方案
+- Simplicity First — 最少代码解决问题，不写投机性功能。200 行能变 50 行就重写
 
 ### 2. Confirm
-Present plan to user:
+Present plan to user with **verifiable goals**:
 ```
 I understand you want to: [summary]
-Plan: [numbered steps]
+Plan:
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
 Complexity: simple/medium/complex
 ```
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
 
 - **Simple/medium:** "Does this look right?"
 - **Complex:** "This is complex. Proceed directly or use /summ:writing-plans?"
@@ -60,6 +73,14 @@ Complexity: simple/medium/complex
 
 ### 3. Execute
 For each todo: mark in_progress → execute → mark completed
+
+**Surgical Changes — Touch only what you must:**
+- Don't "improve" adjacent code, comments, or formatting
+- Don't refactor things that aren't broken
+- Match existing style, even if you'd do it differently
+- Remove imports/variables/functions that YOUR changes made unused
+- Don't remove pre-existing dead code unless asked
+- Every changed line should trace directly to the user's request
 
 ### 4. Verify and Complete
 1. Verify (tests/build/lint for code, installation for setup, config applied)
@@ -103,7 +124,8 @@ Stop and suggest summ:writing-plans when:
 - **用中文与用户沟通** - 理解和确认都用中文进行
 - **Generalization** - 方案必须通用，禁止硬编码
 - **Allow replanning** - 发现方向错误时推翻重新规划
-- **Lightweight first** - 优先最简单的方案
+- **Simplicity First** - 最少代码解决问题，不写投机性功能。200 行能变 50 行就重写
+- **Surgical Changes** - 只改必须改的，每行改动都能追溯到用户需求
 
 ## Integration
 
