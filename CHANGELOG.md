@@ -1,5 +1,15 @@
 # Changelog
 
+## 5.0.7-summ.1.6 (2026-04-15)
+
+### Added
+
+- **Batch generation for writing-plans**: Two-phase plan generation — first produce a task index with complexity estimates (S/M/L), then generate detailed task content in dynamically-sized batches (≤3M budget per batch). Prevents quality degradation, inconsistencies, and generation interruptions on large plans. Always-on (no threshold check).
+
+### Changed
+
+- **Self-review checklist**: Added "Index consistency" check to verify task index matches actual generated tasks.
+
 ## 5.0.7-summ.1.5 (2026-04-13)
 
 ### Upstream Sync (v5.0.4–v5.0.7)

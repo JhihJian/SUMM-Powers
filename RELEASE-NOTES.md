@@ -1,5 +1,20 @@
 # SUMM Release Notes
 
+## v5.0.7-summ.1.6 (2026-04-15)
+
+### Batch Generation for writing-plans
+
+Large implementation plans now use two-phase generation to prevent quality degradation and interruptions:
+
+1. **Task Index** — upfront table listing all tasks with complexity estimates (S/M/L) and file references
+2. **Batch Generation** — detailed task content generated in dynamically-sized batches, with ≤3M complexity budget per batch (1L = 2M = 3S)
+
+This is always-on (no threshold check) and transparent to the execution workflow — no changes to executing-plans, brainstorming, or other skills.
+
+### Files Changed
+
+- Updated: `skills/writing-plans/SKILL.md` — Added "Batch Generation" section, updated "Plan Structure" template, added index consistency check to self-review
+
 ## v5.0.7-summ.1.5 (2026-04-13)
 
 ### Upstream Sync
