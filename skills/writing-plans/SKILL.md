@@ -29,6 +29,50 @@ Before defining tasks, map out which files will be created or modified and what 
 
 This structure informs the task decomposition. Each task should produce self-contained changes that make sense independently.
 
+## Batch Generation
+
+Always use two-phase generation — even for small plans. This prevents quality degradation and generation interruptions on large plans, and has no downside on small ones.
+
+### Phase 1: Task Index
+
+After the plan header and file structure sections, generate a task index table before any detailed task content:
+
+```markdown
+## Task Index
+
+| # | Task | Files | Complexity | Notes |
+|---|------|-------|------------|-------|
+| 1 | Project setup | `package.json`, `tsconfig.json` | S | Init project structure |
+| 2 | Data models | `src/models/*.ts` | L | 4 model files, core types |
+| 3 | API routes | `src/routes/*.ts` | M | CRUD endpoints |
+| ... | ... | ... | ... | ... |
+
+Complexity: S = ~50 lines of task content, M = ~150 lines, L = ~300+ lines
+Batch budget: each batch targets ≤ 3M equivalent (1L = 2M = 3S)
+```
+
+This forces upfront planning of all tasks before writing any detailed content, and provides complexity estimates that drive batch sizing.
+
+### Phase 2: Batch Generation
+
+Generate detailed task content in dynamically-sized batches based on the complexity budget:
+
+**Batch budget rules:**
+- Each batch targets ≤ 3M complexity equivalent
+- Equivalence: 1L = 2M = 3S
+- Examples: 3M, or 1L+1S, or 1L (alone), or 5S
+
+**Generation flow:**
+1. Write plan header (unchanged)
+2. Write file structure section (unchanged)
+3. Write task index table
+4. For each batch:
+   - Write `---` separator followed by `### Batch N (Tasks X-Y)` heading
+   - Generate full detailed content for each task in the batch
+   - Continue immediately to next batch (no user confirmation, no inter-batch review)
+5. Run self-review once at the end across all batches
+6. Save plan file
+
 **OPTIONAL SUB-SKILL:** Use summ:summ-todo to track plan writing progress
 
 ## Task Tracking
@@ -127,13 +171,36 @@ todo done $TASK_ID -m "Plan saved to docs/plans/$PLAN_FILE.md"
 ## Plan Structure
 ```
 markdown
-### Task N: [Component Name]
+# [Feature Name] Implementation Plan
+Goal / Architecture / Tech Stack
+---
+
+## File Structure
+(file list and responsibilities)
+
+## Task Index
+| # | Task | Files | Complexity | Notes |
+|---|------|-------|------------|-------|
+| 1 | ... | ... | M | ... |
+
+---
+
+### Batch 1 (Tasks 1-3)
+
+### Task 1: [Component Name]
 Description
 Files
 Tests
 Verification
+
+### Task 2: ...
+...
+
 ---
-### Task 1: Setup & Context
+
+### Batch 2 (Tasks 4-6)
+
+### Task 4: ...
 ...
 ```
 Use checkboxes to validate each task and track progress. Present task details after user approval.
@@ -187,9 +254,11 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 
 **1. Spec coverage:** Skim each section/requirement in the spec. Can you point to a task that implements it? List any gaps.
 
-**2. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
+**2. Index consistency:** Does the task index match the actual tasks generated? Same count, same titles, same files. If tasks were added or removed during batch generation, update the index to match.
 
-**3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
+**3. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
+
+**4. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
