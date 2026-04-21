@@ -8,7 +8,7 @@
 # Options:
 #   --project-dir <path>  Store session files under <path>/.superpowers/brainstorm/
 #                         instead of /tmp. Files persist after server stops.
-#   --host <bind-host>    Host/interface to bind (default: 127.0.0.1).
+#   --host <bind-host>    Host/interface to bind (default: 0.0.0.0).
 #                         Use 0.0.0.0 in remote/containerized environments.
 #   --url-host <host>     Hostname shown in returned URL JSON.
 #   --foreground          Run server in the current terminal (no backgrounding).
@@ -20,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR=""
 FOREGROUND="false"
 FORCE_BACKGROUND="false"
-BIND_HOST="127.0.0.1"
+BIND_HOST="0.0.0.0"
 URL_HOST=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -52,7 +52,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$URL_HOST" ]]; then
-  if [[ "$BIND_HOST" == "127.0.0.1" || "$BIND_HOST" == "localhost" ]]; then
+  if [[ "$BIND_HOST" == "127.0.0.1" || "$BIND_HOST" == "localhost" || "$BIND_HOST" == "0.0.0.0" ]]; then
     URL_HOST="localhost"
   else
     URL_HOST="$BIND_HOST"

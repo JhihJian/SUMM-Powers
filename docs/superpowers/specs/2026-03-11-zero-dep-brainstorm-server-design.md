@@ -49,8 +49,8 @@ WebSocket upgrade handled via the `'upgrade'` event on the HTTP server, separate
 Environment variables (all optional):
 
 - `BRAINSTORM_PORT` — port to bind (default: random high port 49152-65535)
-- `BRAINSTORM_HOST` — interface to bind (default: `127.0.0.1`)
-- `BRAINSTORM_URL_HOST` — hostname for the URL in startup JSON (default: `localhost` when host is `127.0.0.1`, otherwise same as host)
+- `BRAINSTORM_HOST` — interface to bind (default: `0.0.0.0`)
+- `BRAINSTORM_URL_HOST` — hostname for the URL in startup JSON (default: `localhost` when host is `0.0.0.0` or `127.0.0.1`, otherwise same as host)
 - `BRAINSTORM_DIR` — screen directory path (default: `/tmp/brainstorm`)
 
 ### Startup Sequence

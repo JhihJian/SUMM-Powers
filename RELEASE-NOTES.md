@@ -1,5 +1,24 @@
 # SUMM Release Notes
 
+## v5.0.7-summ.1.7 (2026-04-21)
+
+### Upstream Sync Skill
+
+New skill for continuously syncing valuable changes from [obra/superpowers](https://github.com/obra/superpowers) into the SUMM-Powers fork:
+
+- **Cherry-pick workflow**: 5-step process (fetch → categorize → cherry-pick → verify → record) with no merge commits
+- **Commit categorization**: 8 categories (bugfix/feature/refactor/codex/formatting/docs/infra/tests) with clear skip/cherry-pick rules
+- **Conflict resolution priority**: SUMM-specific files > shared files > upstream-only files
+- **Self-improvement loop**: After each sync, reviews the process and updates exclusion rules
+- **Sync records**: `docs/upstream-sync-records.md` tracks all sync history with detailed tables
+
+### Files Changed
+
+- Added: `skills/upstream-sync/SKILL.md`
+- Added: `docs/upstream-sync-records.md`
+- Updated: `skills/skill-finder/SKILL.md`
+- Updated: `skills/using-summ/SKILL.md`
+
 ## v5.0.7-summ.1.6 (2026-04-15)
 
 ### Batch Generation for writing-plans

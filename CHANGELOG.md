@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.7-summ.1.7 (2026-04-21)
+
+### Added
+
+- **upstream-sync skill**: Cherry-pick-based upstream sync workflow with commit categorization (8 categories), conflict resolution priority, self-review checklist, and self-improvement loop that refines exclusion rules after each sync.
+- **Upstream sync records**: `docs/upstream-sync-records.md` tracks sync history with per-commit categorization tables and self-review notes.
+
+### Changed
+
+- **skill-finder**: Improved external skill discovery and loading.
+- **using-summ**: Minor updates to skill discovery documentation.
+
 ## 5.0.7-summ.1.6 (2026-04-15)
 
 ### Added
