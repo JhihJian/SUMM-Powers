@@ -1,5 +1,40 @@
 # SUMM Release Notes
 
+## v5.0.7-summ.1.8 (2026-04-28)
+
+### Skill Infrastructure (D1-D3)
+
+Automated tooling for skill format validation and standardized authoring:
+
+- **`scripts/lint-skills.sh`** — Validates all skills against format and quality rules:
+  - Frontmatter validation: `name`/`description` required, directory name match, naming convention (`^[a-z0-9][a-z0-9-]*$`), description ≤1024 chars, "Use when" prefix recommendation
+  - Link validation: detects broken relative-path markdown links, skips URLs
+  - Quality checks: top-level heading required, >300 line warning, usage trigger guidance, actionable placeholder detection
+  - CLI: `-v` verbose, `-q` quiet, single-skill targeting, CI exit codes
+- **`scripts/skill-template.md`** — Standardized template with: When to Use, When NOT to Use, Process (DOT flowchart), Common Scenarios, Anti-Patterns table, Key Principles
+
+### mattpocock/skills Integration Analysis
+
+Comprehensive gap analysis against [mattpoclock/skills](https://github.com/mattpocock/skills) identifying 16 improvement opportunities:
+
+- **New skills** (A1-A9): Domain language system, architecture improvement, caveman mode, plan-to-issues, git guardrails, zoom-out, lightweight grilling, issue triage, conversation-to-PRD
+- **Skill enhancements** (B1-B4): Debugging (10 feedback loop methods), TDD (vertical slices + deep modules), skill writing (100-line rule), brainstorming (domain-awareness)
+- **Infrastructure** (D1-D3): Format validation, quality checks, writing template ← *this release*
+
+Full roadmap in `VERSION.md` from v1.8 through v2.3 with dependency graph.
+
+### Files Changed
+
+- Added: `scripts/lint-skills.sh`
+- Added: `scripts/skill-template.md`
+- Added: `scripts/README.md`
+- Added: `docs/superpowers/specs/2026-04-28-mattpocock-skills-integration-analysis.md`
+- Added: `docs/superpowers/plans/2026-04-28-skill-infrastructure-d1-d3.md`
+- Updated: `VERSION.md` — full roadmap added
+- Updated: `CHANGELOG.md`
+- Updated: `.claude-plugin/plugin.json` — version bump
+- Updated: `.claude-plugin/marketplace.json` — version bump
+
 ## v5.0.7-summ.1.7 (2026-04-21)
 
 ### Upstream Sync Skill

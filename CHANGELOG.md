@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.0.7-summ.1.8 (2026-04-28)
+
+### Added
+
+- **lint-skills.sh**: Automated skill format and quality validation. Checks frontmatter (name/description required, directory name match, naming convention, description length), markdown link integrity, top-level heading, line count warning (>300 lines), usage trigger guidance, and actionable placeholder detection. Supports `-v` (verbose) and `-q` (quiet) modes, single-skill targeting, and CI exit codes.
+- **skill-template.md**: Standardized template for new skills with sections: When to Use, When NOT to Use, Process (with DOT flowchart), Common Scenarios, Anti-Patterns, Key Principles.
+- **mattpocock/skills integration analysis**: Comprehensive gap analysis at `docs/superpowers/specs/2026-04-28-mattpocock-skills-integration-analysis.md` identifying 16 improvement opportunities across new skills (A1-A9), existing skill enhancements (B1-B4), and infrastructure (D1-D3).
+
+### Changed
+
+- **VERSION.md**: Added full version roadmap from v1.8 through v2.3 with dependency graph.
+
 ## 5.0.7-summ.1.7 (2026-04-21)
 
 ### Added
