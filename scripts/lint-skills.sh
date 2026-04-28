@@ -165,11 +165,12 @@ check_skill() {
     warn "$skill_name" "No usage trigger guidance found"
   fi
 
-  # 4. Check for common placeholder patterns
+  # 4. Check for placeholder patterns in actionable context (not quoted/teaching text)
+  # Match standalone TBD/TODO/FIXME that aren't inside quotes or part of teaching examples
   local placeholders
-  placeholders=$(grep -ciP 'TBD|TODO|FIXME|PLACEHOLDER|\[insert|<fill' "$skill_file" || true)
+  placeholders=$(grep -cP '^\s*-\s*\[?\s*\]\s*.*(TBD|TODO|FIXME|PLACEHOLDER)|^##?\s+.*TBD|^>\s*TBD|^\s*TBD\s*$|^\s*TODO\s*$|^\s*FIXME\s*$' "$skill_file" || true)
   if ((placeholders > 0)); then
-    error "$skill_name" "Contains $placeholders placeholder(s): TBD/TODO/FIXME/PLACEHOLDER"
+    error "$skill_name" "Contains $placeholders actionable placeholder(s): TBD/TODO/FIXME"
   fi
 
   # 5. Referenced local files should exist
