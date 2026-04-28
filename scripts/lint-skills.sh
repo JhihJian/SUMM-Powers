@@ -143,6 +143,37 @@ check_skill() {
       fi
     fi
   done < <(echo "$body" | grep -oP '\[(?:[^\]]*)\]\(\K[^)#)]+' | grep -v '^https\?://' | grep -v '^mailto:')
+
+  # ── Quality checks ────────────────────────────────────────────────
+  local total_lines
+  total_lines=$(wc -l < "$skill_file")
+
+  # 1. SKILL.md should have a top-level heading (# Title)
+  if ! grep -qP '^# ' "$skill_file"; then
+    error "$skill_name" "No top-level heading (# Title) found"
+  else
+    info "$skill_name" "Has top-level heading"
+  fi
+
+  # 2. Warn if SKILL.md exceeds 300 lines (progressive disclosure threshold)
+  if ((total_lines > 300)); then
+    warn "$skill_name" "SKILL.md is $total_lines lines (consider splitting into reference files)"
+  fi
+
+  # 3. Warn if no "Use when" or trigger guidance anywhere in the file
+  if ! grep -qi "use when\|trigger\|when to use" "$skill_file"; then
+    warn "$skill_name" "No usage trigger guidance found"
+  fi
+
+  # 4. Check for common placeholder patterns
+  local placeholders
+  placeholders=$(grep -ciP 'TBD|TODO|FIXME|PLACEHOLDER|\[insert|<fill' "$skill_file" || true)
+  if ((placeholders > 0)); then
+    error "$skill_name" "Contains $placeholders placeholder(s): TBD/TODO/FIXME/PLACEHOLDER"
+  fi
+
+  # 5. Referenced local files should exist
+  # Already covered by link validation above
 }
 
 for t in "${TARGETS[@]}"; do
