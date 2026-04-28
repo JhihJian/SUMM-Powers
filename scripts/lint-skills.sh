@@ -122,6 +122,27 @@ check_skill() {
   else
     info "$skill_name" "Description starts with 'Use when'"
   fi
+
+  # ── Link validation ───────────────────────────────────────────────
+  # Extract markdown links: [text](path) where path is a relative file reference
+  local body
+  body=$(sed '1,/^---$/d' "$skill_file" | sed '1,/^---$/d')
+
+  while IFS= read -r link; do
+    [[ -z "$link" ]] && continue
+    # Resolve relative paths from the skill directory
+    # Handle ../  prefixes (cross-skill references)
+    local target="$skill_dir/$link"
+    # Normalize the path
+    target=$(cd "$(dirname "$target")" 2>/dev/null && pwd)/$(basename "$target") 2>/dev/null || true
+
+    if [[ ! -e "$target" ]]; then
+      # Check if it's a URL (skip)
+      if [[ ! "$link" =~ ^https?:// && ! "$link" =~ ^mailto: ]]; then
+        warn "$skill_name" "Broken link: $link"
+      fi
+    fi
+  done < <(echo "$body" | grep -oP '\[(?:[^\]]*)\]\(\K[^)#)]+' | grep -v '^https\?://' | grep -v '^mailto:')
 }
 
 for t in "${TARGETS[@]}"; do
