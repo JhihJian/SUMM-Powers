@@ -1,7 +1,7 @@
 # SUMM-Powers Version Roadmap
 
 > 版本号格式: `<upstream-version>-summ.<fork-version>`
-> 当前版本: `5.0.7-summ.2.1`
+> 当前版本: `5.0.7-summ.2.2`
 
 基于 [mattpocock/skills 集成分析](docs/superpowers/specs/2026-04-28-mattpocock-skills-integration-analysis.md) 制定。
 
@@ -64,17 +64,19 @@
 
 ---
 
-## v2.2 — Workflow Integration
+## v2.2 — Lightweight Skills (已完成)
 
-工作流集成工具，补全 brainstorming → plan → PRD → issues 的完整链路。
+> 计划文档: [v2.2 Implementation Plan](docs/superpowers/plans/2026-04-29-v2.2-lightweight-skills.md)
 
-| 编号 | 内容 | 来源 |
-|------|------|------|
-| A3 | **极简通讯模式** — 约 75% token 节省，caveman 模式 `[thing] [action] [reason]` | `caveman` |
-| A4 | **计划转 Issues** — 将计划/PRD 分解为可独立认领的 GitHub Issues，tracer bullet 垂直切片 | `to-issues` |
-| A9 | **对话转 PRD** — 将对话内容合成为 PRD，直接提交为 GitHub issue | `to-prd` |
+轻量技能，聚焦减少噪音和提升决策质量。
 
-**依赖**: A4 和 A9 与 `writing-plans` 技能集成
+| 编号 | 内容 | 来源 | 状态 |
+|------|------|------|------|
+| A3 | **极简通讯模式** — caveman 输出模式 `[thing] [action] [reason]`，替换 `less` 技能内容 | `caveman` | 已完成 |
+| A6 | **上下文提升** — `zoom-out` 技能，退后一步展示宏观模块关系 | `zoom-out` | 已完成 |
+| A7 | **轻量烤问** — `grill-me` 技能，快速决策验证不产出文档 | `grill-me` | 已完成 |
+
+**依赖**: 无
 
 ---
 
