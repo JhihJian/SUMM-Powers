@@ -33,6 +33,7 @@ Is it another module in your codebase?
 
 Is it code you're currently developing (doesn't exist yet)?
   YES → Use the real implementation. Write the minimal code to make the test pass.
+  NO → Re-examine the dependency. Default to using the real implementation.
 ```
 
 **Default: Don't mock.** Only mock when you have a concrete reason.
@@ -194,4 +195,4 @@ From best to worst:
 - Mock returns data that the real implementation never would
 - You reach for `vi.spyOn` before trying constructor injection
 
-**When you see these: Stop. Read @interface-design-for-testability.md. Fix the interface.**
+**When you see these: Stop. Read `interface-design-for-testability.md` in this directory. Fix the interface.**

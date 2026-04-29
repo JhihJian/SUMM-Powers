@@ -392,9 +392,9 @@ Can't check all boxes? You skipped TDD. Start over.
 
 When the test is hard to write, the design is the problem — not the test. These reference files map testing pain to design fixes:
 
-- **@deep-modules.md** — Deep modules hide complexity behind simple interfaces. Shallow modules force callers to know too much. If your test setup is enormous, your module is too shallow.
-- **@interface-design-for-testability.md** — Four testability questions every interface must answer. Design patterns (DI, pure functions, return values) that make code testable by construction.
-- **@mocking-guide.md** — Decision tree for when to mock vs use real code. Mocking levels ranked from best to worst. If mock maintenance exceeds 10% of test code, redesign the interface.
+- **`deep-modules.md`** — Deep modules hide complexity behind simple interfaces. Shallow modules force callers to know too much. If your test setup is enormous, your module is too shallow.
+- **`interface-design-for-testability.md`** — Four testability questions every interface must answer. Design patterns (DI, pure functions, return values) that make code testable by construction.
+- **`mocking-guide.md`** — Decision tree for when to mock vs use real code. Mocking levels ranked from best to worst. If mock maintenance exceeds 10% of test code, redesign the interface.
 
 **Hard to test = hard to use.** The test is your first consumer. Listen to it.
 
@@ -408,10 +408,10 @@ Never fix bugs without a test.
 
 See supporting references for common pitfalls and design guidance:
 
-- **@testing-anti-patterns.md** — Testing mock behavior, test-only methods in production, mocking without understanding, incomplete mocks
-- **@deep-modules.md** — God objects, pass-throughs, feature envy, shallow wrappers; deepening shallow modules
-- **@interface-design-for-testability.md** — Singletons, `new` inside methods, void methods with side effects, hidden time, god constructors
-- **@mocking-guide.md** — When to mock vs use real code, mocking levels, mock maintenance costs
+- **`testing-anti-patterns.md`** — Testing mock behavior, test-only methods in production, mocking without understanding, incomplete mocks
+- **`deep-modules.md`** — God objects, pass-throughs, feature envy, shallow wrappers; deepening shallow modules
+- **`interface-design-for-testability.md`** — Singletons, `new` inside methods, void methods with side effects, hidden time, god constructors
+- **`mocking-guide.md`** — When to mock vs use real code, mocking levels, mock maintenance costs
 
 ## Final Rule
 
