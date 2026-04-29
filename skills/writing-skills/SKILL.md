@@ -107,7 +107,7 @@ Some skills cover broad topics (like this one, at 600+ lines) and naturally exce
 
 **Frontmatter (YAML):**
 - Two required fields: `name` and `description` (see [agentskills.io/specification](https://agentskills.io/specification) for all supported fields)
-- Max 1024 characters total
+- **Max 1024 characters total** for the entire frontmatter block. Keep description under 500 characters to leave room for `name` field and YAML formatting. Count with: `sed -n '2,/^---$/p' skills/name/SKILL.md | wc -c`
 - `name`: Use letters, numbers, and hyphens only (no parentheses, special chars)
 - `description`: Third-person, describes ONLY when to use (NOT what it does)
   - Start with "Use when..." to focus on triggering conditions
@@ -191,6 +191,7 @@ description: Use when implementing any feature or bugfix, before writing impleme
 - If skill is technology-specific, make that explicit in the trigger
 - Write in third person (injected into system prompt)
 - **NEVER summarize the skill's process or workflow**
+- **Include "Skip when" when the skill could be confused with similar skills.** Negative triggers ("Skip for...", "Not for...") help agents distinguish between overlapping skills.
 
 ```yaml
 # ❌ BAD: Too abstract, vague, doesn't include when to use
@@ -207,6 +208,9 @@ description: Use when tests have race conditions, timing dependencies, or pass/f
 
 # ✅ GOOD: Technology-specific skill with explicit trigger
 description: Use when using React Router and handling authentication redirects
+
+# ✅ GOOD: Include negative triggers ("Skip when") for better disambiguation
+description: Use when creating new skills, editing existing skills, or verifying skills work before deployment. Skip for one-off scripts or project-specific CLAUDE.md entries.
 ```
 
 ### 2. Keyword Coverage
