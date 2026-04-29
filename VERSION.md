@@ -1,7 +1,7 @@
 # SUMM-Powers Version Roadmap
 
 > 版本号格式: `<upstream-version>-summ.<fork-version>`
-> 当前版本: `5.0.7-summ.1.8`
+> 当前版本: `5.0.7-summ.1.9`
 
 基于 [mattpocock/skills 集成分析](docs/superpowers/specs/2026-04-28-mattpocock-skills-integration-analysis.md) 制定。
 
@@ -19,14 +19,16 @@
 
 ---
 
-## v1.9 — Core Skill Enhancements
+## v1.9 — Core Skill Enhancements (已完成)
+
+> 计划文档: [v1.9 Implementation Plan](docs/superpowers/plans/2026-04-29-v1.9-core-skill-enhancements.md)
 
 增强现有核心技能，不引入新依赖。
 
-| 编号 | 内容 | 来源 |
-|------|------|------|
-| B1 | `systematic-debugging` 增强 — 10 种反馈循环构建方法、可证伪假设、tagged debug logs、非确定性 bug 策略 | `diagnose` |
-| B2 | `test-driven-development` 增强 — 垂直切片反模式、deep modules 概念、interface design for testability、mocking 指南 | `tdd` |
+| 编号 | 内容 | 来源 | 状态 |
+|------|------|------|------|
+| B1 | `systematic-debugging` 增强 — 10 种反馈循环构建方法、可证伪假设、tagged debug logs、非确定性 bug 策略 | `diagnose` | 已完成 |
+| B2 | `test-driven-development` 增强 — 垂直切片反模式、deep modules 概念、interface design for testability、mocking 指南 | `tdd` | 已完成 |
 
 **依赖**: 无 (v1.8 的 lint 工具可用于验证增强后的 skill)
 
