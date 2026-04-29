@@ -195,6 +195,46 @@ Keep tests green. Don't add behavior.
 
 Next failing test for next feature.
 
+## Vertical Slices vs Horizontal Slices
+
+**Anti-pattern: Horizontal slicing.** Writing all tests first, then all implementation.
+
+Why it fails:
+- You write tests against an imagined design that doesn't survive contact with reality
+- First implementation attempt invalidates half the tests
+- You end up rewriting tests to match the design that actually works — which is tests-after
+- No feedback loop. You lose TDD's core advantage: letting each test drive the design
+
+**Correct: Vertical slicing (tracer bullets).** One test → one implementation → repeat.
+
+```typescript
+// ✅ GOOD: Vertical slice — complete one behavior end to end
+
+// RED: Write one test
+test('retries 3 times on failure', async () => { /* ... */ });
+// GREEN: Implement retry logic
+// REFACTOR: Clean up
+
+// RED: Write next test
+test('uses exponential backoff between retries', async () => { /* ... */ });
+// GREEN: Add backoff
+// REFACTOR: Clean up
+```
+
+```typescript
+// ❌ BAD: Horizontal slice — batch all tests, then implement
+
+test('retries 3 times on failure', async () => { /* ... */ });
+test('uses exponential backoff', async () => { /* ... */ });
+test('gives up after max retries', async () => { /* ... */ });
+test('calls onRetry callback', async () => { /* ... */ });
+// Now implement all of these at once
+// Tests written against imagined design
+// First implementation attempt rewrites half the tests
+```
+
+**Key message:** The Red-Green-Refactor cycle IS vertical slicing. Don't batch the cycles.
+
 ## Good Tests
 
 | Quality | Good | Bad |
@@ -348,6 +388,16 @@ Can't check all boxes? You skipped TDD. Start over.
 | Must mock everything | Code too coupled. Use dependency injection. |
 | Test setup huge | Extract helpers. Still complex? Simplify design. |
 
+## Design for Testability
+
+When the test is hard to write, the design is the problem — not the test. These reference files map testing pain to design fixes:
+
+- **@deep-modules.md** — Deep modules hide complexity behind simple interfaces. Shallow modules force callers to know too much. If your test setup is enormous, your module is too shallow.
+- **@interface-design-for-testability.md** — Four testability questions every interface must answer. Design patterns (DI, pure functions, return values) that make code testable by construction.
+- **@mocking-guide.md** — Decision tree for when to mock vs use real code. Mocking levels ranked from best to worst. If mock maintenance exceeds 10% of test code, redesign the interface.
+
+**Hard to test = hard to use.** The test is your first consumer. Listen to it.
+
 ## Debugging Integration
 
 Bug found? Write failing test reproducing it. Follow TDD cycle. Test proves fix and prevents regression.
@@ -356,10 +406,12 @@ Never fix bugs without a test.
 
 ## Testing Anti-Patterns
 
-When adding mocks or test utilities, read @testing-anti-patterns.md to avoid common pitfalls:
-- Testing mock behavior instead of real behavior
-- Adding test-only methods to production classes
-- Mocking without understanding dependencies
+See supporting references for common pitfalls and design guidance:
+
+- **@testing-anti-patterns.md** — Testing mock behavior, test-only methods in production, mocking without understanding, incomplete mocks
+- **@deep-modules.md** — God objects, pass-throughs, feature envy, shallow wrappers; deepening shallow modules
+- **@interface-design-for-testability.md** — Singletons, `new` inside methods, void methods with side effects, hidden time, god constructors
+- **@mocking-guide.md** — When to mock vs use real code, mocking levels, mock maintenance costs
 
 ## Final Rule
 
