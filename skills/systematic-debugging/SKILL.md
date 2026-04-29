@@ -119,6 +119,26 @@ You MUST complete each phase before proceeding to the next.
    - Keep tracing up until you find the source
    - Fix at source, not at symptom
 
+6. **Build a Feedback Loop**
+
+   **Building the right feedback loop = bug 90% fixed.** If you can reproduce the problem on demand with clear output, the fix is usually obvious.
+
+   **Priority order (fastest/cheapest first):**
+   1. Failing Test — automated, milliseconds
+   2. curl/HTTP Script — real system, seconds to write
+   3. CLI Invocation — debug flags, direct output
+   4. Headless Browser — DOM rendering, cookies
+   5. Replay Captured Trace — production data
+   6. Disposable Harness — isolated component test
+   7. Property-Based/Fuzz Loop — edge case discovery
+   8. Bisection Harness — find introducing commit
+   9. Differential Loop — compare two systems
+   10. HITL Bash Script — human judgment required
+
+   **Escalation rule:** If a method doesn't reveal the bug in 10 minutes, move to the next method. Time spent spinning on a weak feedback loop is time wasted.
+
+   See `feedback-loops.md` in this directory for complete examples, anti-patterns, and selection guidance for each method.
+
 ### Phase 2: Pattern Analysis
 
 **Find the pattern before fixing:**
@@ -146,10 +166,11 @@ You MUST complete each phase before proceeding to the next.
 
 **Scientific method:**
 
-1. **Form Single Hypothesis**
-   - State clearly: "I think X is the root cause because Y"
-   - Write it down
-   - Be specific, not vague
+1. **Form Falsifiable Hypothesis**
+   - State clearly: "If X is the root cause, then changing Y will make the bug disappear / changing Z will make it worse"
+   - A hypothesis must be falsifiable — if nothing could disprove it, it's a hunch, not a hypothesis
+   - Write it down before testing
+   - Be specific: "Token expiry causes 401" not "Auth is broken"
 
 2. **Test Minimally**
    - Make the SMALLEST possible change to test hypothesis
@@ -211,6 +232,34 @@ You MUST complete each phase before proceeding to the next.
    **Discuss with your human partner before attempting more fixes**
 
    This is NOT a failed hypothesis - this is a wrong architecture.
+
+## Tagged Debug Logs
+
+When adding debug logging to find a bug, use tagged prefixes for easy cleanup:
+
+```
+[DEBUG-a4f2] Entering processPayment with amount=99.99
+[DEBUG-a4f2] Token validated: userId=42
+[DEBUG-a4f2] Payment gateway response: 200
+```
+
+**Rules:**
+1. **Tag before operation** — Log state before the operation, not just after failure
+2. **Use a unique tag** — `[DEBUG-a4f2]` lets you `grep DEBUG-a4f2` to find every log line and clean them all up with one search
+3. **Clean up before committing** — `git diff | grep DEBUG-a4f2` to verify no debug logs remain
+4. **Include context** — Every log line should have enough context to understand the flow without reading the code
+
+## Non-Deterministic Bugs
+
+Bugs that don't reproduce every time require a different strategy. The goal is not to fix the bug immediately — it's to **raise the reproduction rate to a debuggable level**.
+
+**Strategy:**
+1. **Stress the system** — Run 100 iterations in parallel, use load testing tools, increase concurrency
+2. **Freeze randomness** — Pin CPU affinity, disable frequency scaling, set fixed seeds for random behavior
+3. **Bisect on conditions** — Binary search through concurrency levels, data volumes, and timing parameters to find the trigger
+4. **Add tagged debug logs** — When it does reproduce, you need the trace to understand what happened
+
+**Escalation:** If the non-deterministic bug is performance-related (slowness that comes and goes), see `performance-regression.md` in this directory for the baseline-first approach to non-deterministic performance debugging.
 
 ## Red Flags - STOP and Follow Process
 
@@ -282,6 +331,8 @@ These techniques are part of systematic debugging and available in this director
 - **`root-cause-tracing.md`** - Trace bugs backward through call stack to find original trigger
 - **`defense-in-depth.md`** - Add validation at multiple layers after finding root cause
 - **`condition-based-waiting.md`** - Replace arbitrary timeouts with condition polling
+- **`feedback-loops.md`** - 10 feedback loop construction methods from fastest to most expensive
+- **`performance-regression.md`** - Performance regression debugging with baseline-first approach
 
 **Related skills:**
 - **summ:test-driven-development** - For creating failing test case (Phase 4, Step 1)
