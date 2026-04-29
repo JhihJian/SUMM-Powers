@@ -597,6 +597,29 @@ step2 [label="read file"];
 helper1, helper2, step3, pattern4
 **Why bad:** Labels should have semantic meaning
 
+## Script vs Documentation Decision Guide
+
+When creating or editing a skill, decide: should this be a **script** (automated, deterministic) or **documentation** (guidance, judgment)?
+
+**Add a script when:**
+- The operation is **deterministic** — same input, same output every time
+- You generate **identical code** across multiple sessions
+- The check can be a **pass/fail test** (lint, format, validate)
+- The tool doesn't exist and would save **repeated manual work**
+
+**Keep as documentation when:**
+- The decision requires **context or judgment** (which approach? how far to refactor?)
+- The output varies based on **project-specific conventions**
+- The guidance is about **when/why**, not **what/how**
+- Agents need to **adapt** the pattern to the specific situation
+
+**Pattern:** `deterministic + repeatable → script it` | `judgment-dependent → document it` | `both → script the mechanical part, document the judgment call`
+
+**Example:**
+- Script: `scripts/lint-skills.sh` — deterministically validates frontmatter format, checks line counts, finds broken links
+- Documentation: "When to create a skill" section — requires judgment about reusability and scope
+- Both: lint script handles format; documentation explains when/why the format matters
+
 ## STOP: Before Moving to Next Skill
 
 **After writing ANY skill, you MUST STOP and complete the deployment process.**
