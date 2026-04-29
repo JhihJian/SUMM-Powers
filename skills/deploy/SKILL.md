@@ -1,5 +1,5 @@
 ---
-name: deploy-awareness
+name: deploy
 description: "Use when user mentions test environment, deployment, CI/CD, service address, environment variables, config changes, or when Claude modifies deployment-related files (docker-compose, CI config, nginx, .env), or when needing an environment for functional testing. Read DEPLOY.md at project root for deployment context when it exists."
 ---
 

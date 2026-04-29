@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Test for deploy-awareness skill
+# Test for deploy skill
 # Usage: ./run-skill-tests.sh --test test-deploy-awareness.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -176,7 +176,7 @@ test_template_creation() {
 # ============================================================
 # Main
 # ============================================================
-echo "=== deploy-awareness skill tests ==="
+echo "=== deploy skill tests ==="
 echo ""
 
 PROJECT_DIR=$(setup_project)
