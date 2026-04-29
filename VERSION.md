@@ -1,7 +1,7 @@
 # SUMM-Powers Version Roadmap
 
 > 版本号格式: `<upstream-version>-summ.<fork-version>`
-> 当前版本: `5.0.7-summ.2.0`
+> 当前版本: `5.0.7-summ.2.1`
 
 基于 [mattpocock/skills 集成分析](docs/superpowers/specs/2026-04-28-mattpocock-skills-integration-analysis.md) 制定。
 
@@ -49,14 +49,16 @@
 
 ---
 
-## v2.1 — Domain-Awareness Integration
+## v2.1 — Domain-Awareness Integration (已完成)
+
+> 计划文档: [v2.1 Implementation Plan](docs/superpowers/plans/2026-04-29-v2.1-domain-awareness-integration.md)
 
 将 domain-awareness 模式整合到现有技能编写和头脑风暴流程中。
 
-| 编号 | 内容 | 来源 |
-|------|------|------|
-| B3 | `writing-skills` 增强 — 100 行上限原则、progressive disclosure、description field 精确写法、脚本添加判断 | `write-a-skill` |
-| B4 | `brainstorming` 增强 — 内联文档更新、挑战现有语言、模糊语言锐化、具体场景压力测试、代码交叉验证 | `grill-with-docs` |
+| 编号 | 内容 | 来源 | 状态 |
+|------|------|------|------|
+| B3 | `writing-skills` 增强 — 100 行上限原则、progressive disclosure、description field 精确写法、脚本添加判断 | `write-a-skill` | 已完成 |
+| B4 | `brainstorming` 增强 — 内联文档更新、挑战现有语言、模糊语言锐化、具体场景压力测试、代码交叉验证 | `grill-with-docs` | 已完成 |
 
 **依赖**: v2.0 的 A1 Domain Language 系统
 
@@ -109,7 +111,7 @@ v1.8 D1-D3 Infrastructure (已完成)
  │
  ├─→ v1.9 B1+B2 Core Enhancements (已完成)
  │
- └─→ v2.0 A1 Domain Language (已完成) ──→ v2.1 B3+B4 Domain-Awareness Integration
+ └─→ v2.0 A1 Domain Language (已完成) ──→ v2.1 B3+B4 Domain-Awareness Integration (已完成)
       │
       └─→ v2.0 A2 Architecture (已完成)
 
