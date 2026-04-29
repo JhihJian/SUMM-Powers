@@ -134,7 +134,7 @@ const { chromium } = require('playwright');
 })();
 ```
 
-**Escalation:** If the bug is timing-dependent or only shows up under specific race conditions, move to method 5.
+**Escalation:** If the bug is timing-dependent or only shows up under specific race conditions, move to method 7 (property-based/fuzz loop) to systematically search for the triggering condition.
 
 ### 5. Replay Captured Trace
 

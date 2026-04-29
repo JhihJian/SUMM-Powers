@@ -57,10 +57,11 @@ git bisect good v2.3.0          # Known: fast
 # bisect-timing.sh — Script for git bisect run
 #!/usr/bin/env bash
 npm run build 2>/dev/null
-TIME=$( { time curl -s http://localhost:8080/api/orders > /dev/null; } 2>&1 | grep real | awk '{print $2}')
-SECONDS=$(echo "$TIME" | awk -F'm' '{print $1 * 60 + $2}')
-echo "Time: ${SECONDS}s"
-if (( $(echo "$SECONDS > 2.0" | bc -l) )); then
+SECONDS_START=$SECONDS
+curl -s http://localhost:8080/api/orders > /dev/null
+ELAPSED=$(( SECONDS - SECONDS_START ))
+echo "Time: ${ELAPSED}s"
+if (( ELAPSED > 2 )); then
   exit 1  # bad — slow
 else
   exit 0  # good — fast
