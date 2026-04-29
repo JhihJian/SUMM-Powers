@@ -80,16 +80,16 @@
 
 ---
 
-## v2.3 — Optional Extensions
+## v2.3 — Workflow & Safety
 
-可选扩展，按需拾取。
+工作流集成与安全护栏。
 
 | 编号 | 内容 | 来源 | 备注 |
 |------|------|------|------|
-| A5 | Git 安全护栏 — PreToolUse hook 阻止危险 git 操作 | `git-guardrails-claude-code` | 范围小，可整合到 `update-config` |
-| A7 | 轻量烤问 — 不依赖文档的快速决策验证 | `grill-me` | 可作为 brainstorming 的"快速模式" |
-| A8 | Issue 生命周期管理 — 基于 label 状态机管理 GitHub issues | `github-triage` | 与 A4 配合形成完整 issue 工作流 |
-| A6 | 上下文提升 — "退后一步"展示宏观模块关系 | `zoom-out` | 太小，合并到 `less` 技能作为触发模式 |
+| A4 | **计划转 Issues** — 将计划/PRD 分解为可独立认领的 GitHub Issues，tracer bullet 垂直切片 | `to-issues` | 与 `writing-plans` 技能集成 |
+| A5 | **Git 安全护栏** — PreToolUse hook 阻止危险 git 操作 | `git-guardrails-claude-code` | 范围小，可整合到 `update-config` |
+| A8 | **Issue 生命周期管理** — 基于 label 状态机管理 GitHub issues | `github-triage` | 与 A4 配合形成完整 issue 工作流 |
+| A9 | **对话转 PRD** — 将对话内容合成为 PRD，直接提交为 GitHub issue | `to-prd` | 可作为 brainstorming 的后置步骤 |
 
 ---
 
@@ -117,7 +117,7 @@ v1.8 D1-D3 Infrastructure (已完成)
       │
       └─→ v2.0 A2 Architecture (已完成)
 
-v2.0 ──→ v2.2 A3+A4+A9 Workflow Integration
+v2.0+ ──→ v2.2 A3+A6+A7 Lightweight Skills (已完成)
 
-v2.0+ ──→ v2.3 A5+A7+A8+A6 Optional (any order)
+v2.0+ ──→ v2.3 A4+A5+A8+A9 Workflow & Safety
 ```
