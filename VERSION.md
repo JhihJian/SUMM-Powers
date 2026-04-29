@@ -1,7 +1,7 @@
 # SUMM-Powers Version Roadmap
 
 > 版本号格式: `<upstream-version>-summ.<fork-version>`
-> 当前版本: `5.0.7-summ.1.9`
+> 当前版本: `5.0.7-summ.2.0`
 
 基于 [mattpocock/skills 集成分析](docs/superpowers/specs/2026-04-28-mattpocock-skills-integration-analysis.md) 制定。
 
@@ -34,21 +34,18 @@
 
 ---
 
-## v2.0 — Domain Language + Architecture (Minor Bump)
+## v2.0 — Domain Language + Architecture (已完成)
+
+> 计划文档: [v2.0 Implementation Plan](docs/superpowers/plans/2026-04-29-v2.0-domain-language-architecture.md)
 
 引入领域语言系统和架构改善能力。范式级变更 — 后续所有 skill 都可引用 CONTEXT.md 术语体系。
 
-| 编号 | 内容 | 来源 |
-|------|------|------|
-| A1 | **Domain Language 系统** — `CONTEXT.md` 领域术语表、`CONTEXT-MAP.md` 多上下文映射、`docs/adr/` 架构决策记录、内联更新机制 | `grill-with-docs` + `DOMAIN-AWARENESS.md` |
-| A2 | **架构改善技能** — `improve-codebase-architecture` skill，系统化发现浅模块并重构为深模块 (depth/leverage/locality/seam 术语体系) | `improve-codebase-architecture` |
+| 编号 | 内容 | 来源 | 状态 |
+|------|------|------|------|
+| A1 | **Domain Language 系统** — `CONTEXT.md` 领域术语表、`CONTEXT-MAP.md` 多上下文映射、`docs/adr/` 架构决策记录、内联更新机制 | `grill-with-docs` + `DOMAIN-AWARENESS.md` | 已完成 |
+| A2 | **架构改善技能** — `improve-codebase-architecture` skill，系统化发现浅模块并重构为深模块 (depth/leverage/locality/seam 术语体系) | `improve-codebase-architecture` | 已完成 |
 
 **依赖**: A2 使用 A1 的术语体系，建议先完成 A1
-
-**关键产出**:
-- `skills/domain-language/SKILL.md`
-- `skills/improve-architecture/SKILL.md`
-- `CONTEXT.md` 模板和 `docs/adr/` 目录结构
 
 ---
 
@@ -110,11 +107,11 @@
 ```
 v1.8 D1-D3 Infrastructure (已完成)
  │
- ├─→ v1.9 B1+B2 Core Enhancements
+ ├─→ v1.9 B1+B2 Core Enhancements (已完成)
  │
- └─→ v2.0 A1 Domain Language ──→ v2.1 B3+B4 Domain-Awareness Integration
+ └─→ v2.0 A1 Domain Language (已完成) ──→ v2.1 B3+B4 Domain-Awareness Integration
       │
-      └─→ v2.0 A2 Architecture
+      └─→ v2.0 A2 Architecture (已完成)
 
 v2.0 ──→ v2.2 A3+A4+A9 Workflow Integration
 
