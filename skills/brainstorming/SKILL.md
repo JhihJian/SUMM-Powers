@@ -83,11 +83,20 @@ digraph brainstorming {
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
 - Focus on understanding: purpose, constraints, success criteria
 
+**Domain-aware mode (when CONTEXT.md exists):**
+
+When the project has a CONTEXT.md, activate these behaviors throughout the session:
+
+- **Inline updates:** When a term is clarified or confirmed, update CONTEXT.md immediately — don't batch updates for later
+- **Challenge conflicts:** If the user uses a term differently from CONTEXT.md's definition, point it out: "CONTEXT.md defines [term] as [X], but you're using it as [Y]. Should we update the definition?"
+- **Sharpen vagueness:** When the user uses a vague term that isn't in CONTEXT.md, propose a precise definition and ask whether to add it
+
 **Exploring approaches:**
 
 - Propose 2-3 different approaches with trade-offs
 - Present options conversationally with your recommendation and reasoning
 - Lead with your recommended option and explain why
+- Invent concrete edge scenarios that test concept boundaries — "What happens when [edge case]? Does [term] from CONTEXT.md still apply here?"
 
 **Presenting the design:**
 
@@ -109,6 +118,7 @@ digraph brainstorming {
 - Explore the current structure before proposing changes. Follow existing patterns.
 - Where existing code has problems that affect the work (e.g., a file that's grown too large, unclear boundaries, tangled responsibilities), include targeted improvements as part of the design - the way a good developer improves code they're working in.
 - Don't propose unrelated refactoring. Stay focused on what serves the current goal.
+- When the user says "this works like X" or "this module does Y", check the actual code to confirm. If there's a mismatch between the user's mental model and the code, flag it — this often reveals misunderstandings worth exploring
 
 ## After the Design
 
