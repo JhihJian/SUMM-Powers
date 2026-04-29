@@ -90,6 +90,19 @@ skills/
 - Code patterns (< 50 lines)
 - Everything else
 
+### Progressive Disclosure
+
+Structure SKILL.md for layered reading:
+
+1. **Overview** (5-10 lines) — Core principle, what this skill does
+2. **When to Use** (10-15 lines) — Triggers, symptoms, "Skip when" exclusions
+3. **Core Workflow** (30-50 lines) — Main process, flowchart, quick reference
+4. **Advanced/Reference** → link to separate files
+
+**100-line target:** SKILL.md should stay ≤100 lines. When it grows beyond that, detailed content belongs in reference files that agents load on demand.
+
+Some skills cover broad topics (like this one, at 600+ lines) and naturally exceed the target. That's acceptable for comprehensive reference skills — but most skills should aim for the target. When in doubt, extract.
+
 ## SKILL.md Structure
 
 **Frontmatter (YAML):**
