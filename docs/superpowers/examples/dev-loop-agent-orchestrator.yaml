@@ -1,0 +1,51 @@
+# Example agent-orchestrator.yaml for dev-loop workflow
+# Place this in your project root as agent-orchestrator.yaml
+# Adjust values for your project
+
+defaults:
+  runtime: tmux
+  agent: claude-code
+  workspace: worktree
+  notifiers:
+    - desktop  # Add slack/discord/webhook for team notifications
+
+projects:
+  my-project:
+    repo: owner/my-project
+    path: ~/my-project
+    defaultBranch: main
+
+    # dev-loop specific configuration
+    agentRules: |
+      This project uses the dev-loop workflow for development.
+      Master agents should load skill summ:dev-loop and follow its state machine.
+
+    # Reactions for automated triggering (future use)
+    # Uncomment when ready for automated workflow triggers
+    # reactions:
+    #   ci-failed:
+    #     auto: true
+    #     action: send-to-agent
+    #     message: "CI failed on your PR. Load skill summ:systematic-debugging and fix the failing tests."
+    #     retries: 2
+    #     escalateAfter: 30m
+    #
+    #   review-comment:
+    #     auto: true
+    #     action: send-to-agent
+    #     message: "You received a code review comment. Load skill summ:receiving-code-review before responding."
+    #
+    #   approved-and-green:
+    #     auto: true
+    #     action: auto-merge
+
+# Notifier configuration for escalation alerts
+# notifiers:
+#   slack:
+#     plugin: slack
+#     channel: "#dev-alerts"
+#     webhookUrl: ${SLACK_WEBHOOK_URL}
+#
+#   webhook:
+#     plugin: webhook
+#     url: ${WEBHOOK_URL}
