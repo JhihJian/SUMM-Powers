@@ -120,3 +120,81 @@ VALIDATING.COMPLETING
 | DELIVERING.DEPLOYING | `summ:deploy` | Worker |
 | DELIVERING.E2E_VERIFYING | Playwright / API tests | Worker |
 | VALIDATING.VALUE_PROVING | Built into this skill | Master |
+
+## Worker Dispatch
+
+### How to Spawn a Worker
+
+Use Agent-Orchestrator CLI to create isolated worker sessions:
+
+```bash
+ao spawn <project> \
+  --prompt "<task prompt from worker-prompt-template.md>" \
+  --system-prompt-file <path-to-worker-system-prompt>
+```
+
+**Worker prompt construction:**
+1. Fill `./worker-prompt-template.md` with task-specific content
+2. Set `SKILL_TO_LOAD` to the skill the worker must use
+3. Paste full task text (never make worker read the plan file)
+4. Set working directory to the project's worktree path
+
+### Dispatch Strategy
+
+Read the plan's task dependency graph:
+- **Independent tasks**: Dispatch in parallel (one `ao spawn` per task)
+- **Sequential tasks**: Dispatch one at a time, wait for DONE before next
+- **Deploy/E2E**: Always single-worker, sequential (deploy first, then E2E)
+
+### Monitoring Workers
+
+After dispatching, poll worker status:
+
+```bash
+ao status <session-id>
+```
+
+**Activity states to handle:**
+- `active` / `working` → Continue waiting
+- `idle` / `ready` → Worker may have finished, check output
+- `waiting_input` → Worker is asking a question, provide answer via `ao send`
+- `blocked` / `exited` → Worker failed, assess and handle
+
+**Polling cadence:** Check every 2-5 minutes. Do not poll continuously — use the time for other coordination work.
+
+**Timeout:** If a worker exceeds 30 minutes without state change, treat as BLOCKED.
+
+### Handling Worker Reports
+
+Workers report one of four statuses:
+
+**DONE:** Task completed successfully. Collect output, proceed to next task or code review.
+
+**DONE_WITH_CONCERNS:** Completed but flagged doubts. Read concerns before proceeding. Address correctness/scope concerns. Note observations for later.
+
+**NEEDS_CONTEXT:** Worker needs more information. Provide missing context and send via `ao send`.
+
+**BLOCKED:** Worker cannot complete. Assess:
+1. Context problem → provide more context, re-dispatch
+2. Reasoning problem → re-dispatch with more capable model
+3. Task too large → break into smaller pieces, re-dispatch
+4. External blocker → ESCALATED
+
+## Code Review (BUILDING.CODE_REVIEWING)
+
+After all workers report DONE:
+
+1. Load `summ:requesting-code-review`
+2. For each worker's PR:
+   a. Read the diff: `gh pr diff <pr-url>`
+   b. Compare against the task spec from the plan
+   c. Check for: missing requirements, extra work, code quality
+3. If issues found:
+   - Document specific issues per PR
+   - Transition back to BUILDING.TDD_IMPLEMENTING
+   - Dispatch fix workers with specific review feedback
+   - increment loopCount
+4. If all PRs pass:
+   - Transition to DELIVERING.DEPLOYING
+
+**Never** skip code review. **Never** proceed with unfixed issues.
