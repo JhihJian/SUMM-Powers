@@ -128,10 +128,10 @@ VALIDATING.COMPLETING
 Use Agent-Orchestrator CLI to create isolated worker sessions:
 
 ```bash
-ao spawn <project> \
-  --prompt "<task prompt from worker-prompt-template.md>" \
-  --system-prompt-file <path-to-worker-system-prompt>
+ao spawn <project> --prompt "<task prompt from worker-prompt-template.md>"
 ```
+
+**System prompt setup:** Worker system instructions (skill loading, report format, scope constraints) are configured via `agentRules` in `agent-orchestrator.yaml`. See `docs/superpowers/examples/dev-loop-agent-orchestrator.yaml` for the full configuration.
 
 **Worker prompt construction:**
 1. Fill `./worker-prompt-template.md` with task-specific content
@@ -205,9 +205,7 @@ After all workers report DONE:
 
 1. Dispatch one deploy worker:
    ```bash
-   ao spawn <project> \
-     --prompt "Deploy the application following DEPLOY.md" \
-     --system-prompt-file <worker prompt with summ:deploy skill>
+   ao spawn <project> --prompt "Deploy the application following DEPLOY.md"
    ```
 2. Worker reads DEPLOY.md, executes deployment steps
 3. On success: record deploy URL/environment info as evidence, transition to E2E_VERIFYING
@@ -221,9 +219,7 @@ After all workers report DONE:
    - **Manual API verification**: Worker makes real API calls
 2. Dispatch one E2E worker:
    ```bash
-   ao spawn <project> \
-     --prompt "Run E2E verification: <strategy and commands from plan>" \
-     --system-prompt-file <worker prompt (no SUMM skill for E2E — worker operates from instructions only)>"
+   ao spawn <project> --prompt "Run E2E verification: <strategy and commands from plan>"
    ```
    Note: E2E workers do not load a SUMM skill. They operate from the instructions in the prompt (test commands, target environment, expected results).
 3. On success: collect test results as evidence, transition to VALUE_PROVING

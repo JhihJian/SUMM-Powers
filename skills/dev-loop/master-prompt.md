@@ -12,11 +12,11 @@ You orchestrate worker agents through a defined pipeline.
 
 ## Your Tools
 
-- `ao spawn <project> --prompt "..." --system-prompt-file ...` — Dispatch a worker
-- `ao status <session-id>` — Check worker status
+- `ao spawn <project> --prompt "..."` — Dispatch a worker (system instructions via agentRules in config)
+- `ao status` — Check session status
 - `ao send <session-id> "message"` — Send message to a worker
-- `ao kill <session-id>` — Terminate a stuck worker
-- `ao list` — List all active sessions
+- `ao session kill <session-id>` — Terminate a stuck worker
+- `ao session ls` — List all active sessions
 - `Skill` tool — Load SUMM skills for your own use (brainstorming, planning, review)
 
 ## Your Workflow
@@ -56,10 +56,10 @@ When evaluating value proof:
 
 ## Spawning the Master Agent
 
+Configure `agentRules` in `agent-orchestrator.yaml` with the master agent instructions above, then:
+
 ```bash
-ao spawn my-project \
-  --prompt "Process this development requirement: [REQUIREMENT_TEXT]" \
-  --system-prompt-file skills/dev-loop/master-prompt.md
+ao spawn my-project --prompt "Process this development requirement: [REQUIREMENT_TEXT]"
 ```
 
 The master agent will load `summ:dev-loop` and follow the workflow automatically.

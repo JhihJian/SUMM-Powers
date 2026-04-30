@@ -4,38 +4,27 @@ Use this template when dispatching a worker agent via `ao spawn`.
 
 Fill in the `[PLACEHOLDERS]` with task-specific content before spawning.
 
-## Usage
+## System Prompt Setup
 
-```bash
-# 1. Fill the template with task content
-# 2. Save to a temporary file
-# 3. Pass as --prompt to ao spawn
+Worker system instructions are configured via `agentRules` in `agent-orchestrator.yaml`. The rules should include:
 
-ao spawn <project> \
-  --prompt-file /tmp/worker-task-<N>.md \
-  --system-prompt-file /tmp/worker-system-prompt.md
+```yaml
+agentRules: |
+  You are a worker agent in a dev-loop workflow.
+  You have SUMM. You MUST load and follow the skill specified in your task.
+  CRITICAL RULES:
+  1. Load the specified skill IMMEDIATELY using the Skill tool before doing anything
+  2. Follow the skill's instructions exactly
+  3. Work ONLY on the task assigned to you — do not modify unrelated files
+  4. Do not attempt architectural decisions — escalate if you encounter them
+  5. Report your results using the format specified in your task
 ```
 
-## System Prompt for Workers
-
-Save this as the system prompt file:
-
-```
-You are a worker agent in a dev-loop workflow.
-
-You have SUMM. You MUST load and follow the skill specified in your task.
-
-CRITICAL RULES:
-1. Load the specified skill IMMEDIATELY using the Skill tool before doing anything
-2. Follow the skill's instructions exactly
-3. Work ONLY on the task assigned to you — do not modify unrelated files
-4. Do not attempt architectural decisions — escalate if you encounter them
-5. Report your results using the format below
-
-Your work is isolated in a dedicated worktree. Focus on your task.
-```
+See `docs/superpowers/examples/dev-loop-agent-orchestrator.yaml` for the full configuration.
 
 ## Task Prompt Template
+
+Pass this as the `--prompt` text when spawning a worker:
 
 ```
 ## Your Task
@@ -108,19 +97,7 @@ Use NEEDS_CONTEXT if you need information that wasn't provided.
 ## Example: TDD Worker
 
 ```bash
-# Save system prompt
-cat > /tmp/worker-system-prompt.md << 'EOF'
-You are a worker agent in a dev-loop workflow.
-You have SUMM. You MUST load and follow the skill specified in your task.
-Load the specified skill IMMEDIATELY using the Skill tool before doing anything.
-Follow the skill's instructions exactly.
-Work ONLY on the task assigned to you — do not modify unrelated files.
-Report your results using the format specified in your task.
-EOF
-
-# Save task prompt (filled template)
-cat > /tmp/worker-task-1.md << 'EOF'
-## Your Task
+ao spawn my-project --prompt "## Your Task
 
 You are implementing: Task 1 - User Registration Endpoint
 
@@ -145,10 +122,8 @@ Database access is via the UserRepository class in src/repositories/user-reposit
 Load this skill before starting work: summ:test-driven-development
 
 Work from: /path/to/project-worktree
-EOF
 
-# Spawn worker
-ao spawn my-project \
-  --prompt-file /tmp/worker-task-1.md \
-  --system-prompt-file /tmp/worker-system-prompt.md
+### Report Format
+
+[... use the standard report format from above ...]"
 ```
