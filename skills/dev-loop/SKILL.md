@@ -107,7 +107,7 @@ VALIDATING.COMPLETING
 | Value proof: incomplete work | BUILDING.TDD | Missing features |
 | Loop count ≥ 3 | ESCALATED | Force human intervention |
 
-**Every loop-back increments loopCount.** When loopCount reaches maxLoops (default: 3), transition to ESCALATED regardless of failure type.
+**Every loop-back increments loopCount.** Initial value is 1 (first pass). Each loop-back adds 1. When loopCount reaches maxLoops (default: 3), transition to ESCALATED regardless of failure type.
 
 ## Skills Used at Each Phase
 
@@ -180,6 +180,8 @@ Workers report one of four statuses:
 3. Task too large → break into smaller pieces, re-dispatch
 4. External blocker → ESCALATED
 
+**Mixed results (some DONE, some BLOCKED):** When parallel workers return mixed statuses, do not block completed work on a single failure. Re-dispatch or escalate only the blocked task(s). Proceed with completed tasks through the pipeline. Value proof evaluates only the delivered scope.
+
 ## Code Review (BUILDING.CODE_REVIEWING)
 
 After all workers report DONE:
@@ -221,8 +223,9 @@ After all workers report DONE:
    ```bash
    ao spawn <project> \
      --prompt "Run E2E verification: <strategy and commands from plan>" \
-     --system-prompt-file <worker prompt with test execution instructions>
+     --system-prompt-file <worker prompt (no SUMM skill for E2E — worker operates from instructions only)>"
    ```
+   Note: E2E workers do not load a SUMM skill. They operate from the instructions in the prompt (test commands, target environment, expected results).
 3. On success: collect test results as evidence, transition to VALUE_PROVING
 4. On failure: collect failing test details, transition back to BUILDING.TDD_IMPLEMENTING, increment loopCount
 
