@@ -97,13 +97,13 @@ PLANNING.BRAINSTORMING → PLAN_WRITING → BUILDING.TDD_IMPLEMENTING
 ```
 
 **验证点：**
-- [ ] `ao status` 显示 master session 的 phase 经历了所有 4 个大阶段
-- [ ] `git log` 有 worker 的实现提交
-- [ ] `tests/echo.test.js` 存在且测试通过
-- [ ] `src/index.js` 包含 POST /api/echo endpoint
-- [ ] 部署后 `curl localhost:3000/api/echo -X POST -d '{"message":"hi"}'` 返回正确
-- [ ] loopCount 保持为 1（无回退）
-- [ ] master session 输出包含 value proof 通过的证据
+- [x] `ao status` 显示 master session 的 phase 经历了所有 4 个大阶段
+- [x] `git log` 有 worker 的实现提交
+- [x] `tests/echo.test.js` 存在且测试通过
+- [x] `src/index.js` 包含 POST /api/echo endpoint
+- [x] 部署后 `curl localhost:3000/api/echo -X POST -d '{"message":"hi"}'` 返回正确
+- [x] loopCount 保持为 1（无回退）
+- [x] master session 输出包含 value proof 通过的证据
 
 ---
 
@@ -114,18 +114,28 @@ PLANNING.BRAINSTORMING → PLAN_WRITING → BUILDING.TDD_IMPLEMENTING
 **前置条件：** 干净的测试项目。
 
 **需求 prompt（制造不可解决的任务）：**
+
+> ⚠️ 已测试发现原设计无法触发 BLOCKED。Worker 会用 mock 实现功能而不报告 BLOCKED。
+> 需要设计**无法用 mock 绕过**的硬性前置条件。
+
+```
+实现需求：你必须完成以下步骤才能报告 DONE：
+1. 调用 GET https://must-succeed-nonexistent-12345.example.com/health 并获得 200 响应
+2. 将 API 返回内容写入 src/health-check-result.json
+3. 只有步骤 1 成功后才算完成
+如果步骤 1 失败（DNS 解析失败、连接超时等），报告 BLOCKED。
+注意：不能 mock 这个调用，必须真正调用成功。
+```
+
+**原设计（已废弃）：**
 ```
 实现需求：集成第三方支付 API。
 需要调用 POST https://nonexistent-api-12345.example.com/v1/payments，
 使用 API key 从环境变量 PAYMENT_API_KEY 获取。
 如果环境变量不存在或 API 不可达，报告 BLOCKED。
 ```
-
-**预期：**
-- Worker 尝试调用 API → 失败
-- Worker 报告 BLOCKED（外部依赖不可用）
-- Master 转入 ESCALATED
-- Master 通知人工
+**废弃原因：** Worker 把"API 不可达 → 报告 BLOCKED"理解为"处理 API 不可达的错误返回"，
+用 mock 实现了功能。
 
 **验证点：**
 - [ ] `ao status` 最终状态为 exited/blocked（不是 done）
@@ -378,18 +388,83 @@ timestamp 和 length 字段是辅助信息，不是核心功能。
 
 ---
 
+## Phase A 测试结果（2026-04-30）
+
+### 已执行
+
+| 场景 | 结果 | 说明 |
+|------|------|------|
+| 10. Worker Prompt 静态检查 | **PASS** (5/5) | agentRules + worker-prompt-template 结构正确 |
+| 2. Worker BLOCKED | **转 Happy Path** | dev-loop 状态机启动成功，但 BLOCKED 未触发 |
+
+### 关键发现
+
+**1. Critical: dev-loop skill 未包含在 SUMM 插件包中**
+
+- `skills/dev-loop/` 存在于仓库源码，但未发布到 `~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/`
+- `ao spawn` 的 session 无法通过 Skill tool 加载 `summ:dev-loop`
+- **修复：** 手动 `cp -r skills/dev-loop ~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/dev-loop`
+- **长期修复：** 将 dev-loop 纳入插件发布流程
+
+**2. Master-Worker 架构验证成功**
+
+- Master agent 正确加载 dev-loop 状态机
+- Master dispatch 了 Worker session via `ao spawn`
+- Worker 按 TDD 流程完成实现（RED → GREEN → refactor）
+- Master 进行了 CODE_REVIEW → DEPLOY → E2E → VALUE_PROOF 完整流程
+- Value Proof 评估正确（按需求逐条比对证据）
+
+**3. 场景 2 BLOCKED 未触发**
+
+- Worker 把"API 不可达 → 报告 BLOCKED"理解为"处理 API 不可达的错误返回"
+- 用 mock 实现了功能（503/502 错误响应），这是正确的工程决策
+- **需要重新设计 BLOCKED 触发条件：** 用无法用 mock 绕过的硬性前置条件
+
+**4. dev-loop 实际行为与计划的偏差**
+
+- Master agent 在 DEPLOY 阶段自己执行了部署和 E2E 测试（而非 dispatch worker）
+- 需求 prompt 需要加 `Execute autonomously. Do not ask for confirmation.` 避免卡在权限确认
+- 文件写入权限会触发 Claude Code 的权限弹窗，需要 `tmux send-keys Enter` 来确认
+
+### 测试环境修正
+
+**前置条件更新（所有场景都需要）：**
+1. 确保 dev-loop skill 已发布到插件：`cp -r skills/dev-loop ~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/`
+2. ao spawn prompt 必须包含 "dev-loop master" 关键词以触发强制加载
+3. 所有场景需要在 `bypassPermissions` 模式下运行避免权限弹窗
+
 ## 执行策略
 
 ### 分批执行
 
 不建议一次性跑全部 10 个场景。建议按风险分组：
 
-**Phase A（低成本验证）：**
-- 场景 10（静态检查，无成本）
-- 场景 2（Worker BLOCKED，5 min）
+**Phase A（低成本验证）：** ✅ 已完成
+- 场景 10（静态检查，无成本）— PASS
+- 场景 2（Worker BLOCKED）— 需要重新设计
 
-**Phase B（核心流程）：**
-- 场景 1（Happy path，最重要）
+**Phase B（核心流程）：** ✅ 已完成
+- 场景 1（Happy path，最重要）— **PASS (7/7)**
+
+### Phase B 测试结果（2026-04-30）
+
+| 检查点 | 结果 |
+|--------|------|
+| ao status 显示 master 经历了 PLANNING → BUILDING → DELIVERING → VALIDATING | ✅ |
+| git log 有 worker 的实现提交 | ✅ Commit d5e5f51 |
+| tests/echo.test.js 存在且测试通过 | ✅ 6/6 tests pass |
+| src/index.js 包含 POST /api/echo endpoint | ✅ |
+| 部署后 curl 返回正确 | ✅ `{"echo":"hi"}` |
+| loopCount 保持为 1（无回退） | ✅ |
+| master 输出包含 value proof 通过的证据 | ✅ All requirements PASS |
+
+**实际状态流转：** PLANNING.PLAN_WRITING → BUILDING.TDD_IMPLEMENTING (worker dltp-11) → BUILDING.CODE_REVIEWING → DELIVERING.DEPLOYING → DELIVERING.E2E_VERIFYING → VALIDATING.VALUE_PROVING → VALIDATING.COMPLETING → DONE
+
+**耗时：** ~11 分钟（Master dltp-10 + Worker dltp-11）
+**注意事项：**
+- GLM 模型启动不稳定，部分 session 卡在 0% context（dltp-6/7/8/9 均失败，dltp-10 成功）
+- 文件写入权限弹窗需手动批准（tmux send-keys Enter）
+- Master 自己做了 CODE_REVIEW + DEPLOY + E2E，而非 dispatch 独立 worker
 
 **Phase C（失败回退）：**
 - 场景 5（E2E 失败）— 最容易控制
@@ -401,6 +476,20 @@ timestamp 和 length 字段是辅助信息，不是核心功能。
 - 场景 8（Max loops）
 - 场景 9（混合结果）
 - 场景 6（需求偏差）— 最不可控
+
+### 场景 2 需要重新设计
+
+原始设计：调用不存在的 API → BLOCKED
+问题：Worker 用 mock 实现了功能，不触发 BLOCKED
+
+建议新设计：
+```
+需求：你必须完成以下步骤才能报告 DONE：
+1. 调用 GET https://must-succeed.example.com/health 并获得 200 响应
+2. 只有步骤 1 成功后才算完成
+3. 如果步骤 1 失败，报告 BLOCKED（外部依赖不可用）
+注意：不能 mock 这个调用，必须真正调用成功。
+```
 
 ### 每个场景的自动化脚本
 
