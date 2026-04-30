@@ -198,3 +198,109 @@ After all workers report DONE:
    - Transition to DELIVERING.DEPLOYING
 
 **Never** skip code review. **Never** proceed with unfixed issues.
+
+## Deployment (DELIVERING.DEPLOYING)
+
+1. Dispatch one deploy worker:
+   ```bash
+   ao spawn <project> \
+     --prompt "Deploy the application following DEPLOY.md" \
+     --system-prompt-file <worker prompt with summ:deploy skill>
+   ```
+2. Worker reads DEPLOY.md, executes deployment steps
+3. On success: record deploy URL/environment info as evidence, transition to E2E_VERIFYING
+4. On failure: diagnose, transition back to BUILDING.TDD_IMPLEMENTING, increment loopCount
+
+## E2E Verification (DELIVERING.E2E_VERIFYING)
+
+1. The plan produced in PLANNING.PLAN_WRITING specifies which E2E strategy to use:
+   - **Existing E2E tests**: Run against deployed environment
+   - **New E2E tests**: Written during BUILDING phase, run now
+   - **Manual API verification**: Worker makes real API calls
+2. Dispatch one E2E worker:
+   ```bash
+   ao spawn <project> \
+     --prompt "Run E2E verification: <strategy and commands from plan>" \
+     --system-prompt-file <worker prompt with test execution instructions>
+   ```
+3. On success: collect test results as evidence, transition to VALUE_PROVING
+4. On failure: collect failing test details, transition back to BUILDING.TDD_IMPLEMENTING, increment loopCount
+
+## Value Proof (VALIDATING.VALUE_PROVING)
+
+The master agent evaluates whether the delivery satisfies the original requirement.
+
+**Evidence to collect:**
+1. Original requirement text
+2. Plan (what was intended)
+3. Worker reports (what was implemented)
+4. Code review results (quality gate passed)
+5. Deploy status and URL
+6. E2E test results
+
+**Evaluation process:**
+1. Re-read the original requirement
+2. For each requirement point, check if evidence proves it's satisfied
+3. Read the actual diff (`git diff <base>..<head>`) — do not trust reports alone
+4. Check for scope creep (extra features not in requirement)
+
+**Decision:**
+- **PASS**: Every requirement point has evidence. No unrequested features. → COMPLETING
+- **GAP (requirement misunderstood)**: What was built doesn't match what was asked. → PLANNING.BRAINSTORMING, loopCount++
+- **GAP (partial implementation)**: Some requirement points have no evidence. → BUILDING.TDD_IMPLEMENTING, loopCount++
+
+**Never** accept "close enough." Every point in the requirement must have corresponding evidence.
+
+## Completing (VALIDATING.COMPLETING)
+
+1. **Archive evidence**: Write a value proof document containing:
+   - Requirement (original text)
+   - Plan summary
+   - Implementation summary (files changed, key decisions)
+   - Test results
+   - Deploy info
+   - Value proof evaluation
+2. **Notify human**: Send completion notification with:
+   - Summary of what was delivered
+   - Link to PR(s)
+   - Link to deployed environment
+   - Value proof document location
+
+## Escalation
+
+When transitioning to ESCALATED:
+1. **Compile diagnostic report**:
+   - Original requirement
+   - Number of loops attempted
+   - What failed at each loop
+   - What was tried to fix it
+   - Current state (partial work, blockers)
+2. **Notify human** with the full diagnostic report
+3. **Pause workflow** — do not continue until human responds
+
+**Escalation triggers:**
+- loopCount ≥ maxLoops (default: 3)
+- Worker BLOCKED and unresolvable
+- Master agent cannot determine failure type
+
+## Red Flags
+
+| Thought | Reality |
+|---------|---------|
+| "The deploy probably worked" | Verify with evidence, not assumptions |
+| "Workers completed, that's enough" | Code review is mandatory, not optional |
+| "E2E tests are nice to have" | E2E verification is a gate, not a suggestion |
+| "Value proof is just a formality" | This is where wrong requirements get caught |
+| "One more loop will fix it" | If loopCount is already 2, the problem may be deeper |
+| "I'll just fix this myself" | Master agent never writes code. Dispatch a worker |
+| "Skip review, the worker self-reviewed" | Self-review and code review serve different purposes |
+| "Deploy failed, try again immediately" | Diagnose first — re-deploying the same code will fail again |
+
+**Never:**
+- Skip any phase or sub-state
+- Proceed with unfixed issues
+- Exceed maxLoops without escalating
+- Write code as the master agent
+- Deploy without passing code review
+- Run E2E without successful deployment
+- Accept value proof without reading the actual diff
