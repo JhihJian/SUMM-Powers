@@ -42,6 +42,19 @@ digraph when_to_use {
 - Only need implementation (no deploy/verify) → use `summ:subagent-driven-development`
 - Requirement is unclear → use `summ:brainstorming` first
 
+## Setup
+
+Before first use, run the init script on your target project:
+
+```bash
+bash skills/dev-loop/scripts/init.sh /path/to/project --name my-project
+```
+
+This generates:
+- `agent-orchestrator.yaml` — project config with SUMM agentRules
+- `.claude/settings.json` — auto-approve permissions for spawned sessions
+- `DEPLOY.md` — deployment template (edit with actual steps)
+
 ## Workflow State Machine
 
 ### Phases and Sub-states
