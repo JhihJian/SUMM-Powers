@@ -7,7 +7,7 @@ description: Use when automating a full development lifecycle from requirement t
 
 Automate the full lifecycle of a development requirement: planning, TDD implementation, code review, deployment, E2E verification, and value proof — with loop-back on failure and escalation when stuck.
 
-**Core principle:** A master agent orchestrates worker agents through a fixed pipeline. Master agent never writes code. It coordinates, reviews, and judges. Workers execute using SUMM skills.
+**Core principle:** A master agent orchestrates worker agents through a fixed pipeline. Master agent never writes code, never deploys, and never runs E2E tests. It coordinates, reviews, and judges. Workers execute using SUMM skills. Every execution step (TDD, deploy, E2E) goes through `ao spawn` — no exceptions.
 
 **Why a loop:** Failures are normal in development. Rather than stopping on failure, this workflow diagnoses the failure type, returns to the appropriate phase, and retries. Human is involved only at escalation or post-hoc review.
 
@@ -207,6 +207,12 @@ After all workers report DONE:
    ```bash
    ao spawn <project> --prompt "Deploy the application following DEPLOY.md"
    ```
+   The deploy prompt MUST include a port cleanup pre-step:
+   ```
+   Before starting the server, kill any existing process on the target port:
+   lsof -ti:$PORT | xargs kill -9 2>/dev/null; true
+   Then follow DEPLOY.md steps.
+   ```
 2. Worker reads DEPLOY.md, executes deployment steps
 3. On success: record deploy URL/environment info as evidence, transition to E2E_VERIFYING
 4. On failure: diagnose, transition back to BUILDING.TDD_IMPLEMENTING, increment loopCount
@@ -292,6 +298,8 @@ When transitioning to ESCALATED:
 | "Value proof is just a formality" | This is where wrong requirements get caught |
 | "One more loop will fix it" | If loopCount is already 2, the problem may be deeper |
 | "I'll just fix this myself" | Master agent never writes code. Dispatch a worker |
+| "I'll deploy it myself, it's faster" | NO. Deploy MUST go through `ao spawn`. Master does not run servers |
+| "I'll just run the E2E tests myself" | NO. E2E MUST go through `ao spawn`. Master collects results, never executes tests |
 | "Skip review, the worker self-reviewed" | Self-review and code review serve different purposes |
 | "Deploy failed, try again immediately" | Diagnose first — re-deploying the same code will fail again |
 
@@ -300,6 +308,8 @@ When transitioning to ESCALATED:
 - Proceed with unfixed issues
 - Exceed maxLoops without escalating
 - Write code as the master agent
+- Deploy or run E2E as the master agent — always use `ao spawn`
 - Deploy without passing code review
 - Run E2E without successful deployment
 - Accept value proof without reading the actual diff
+- Execute `npm start`, `npm run test:e2e`, or any server command directly — that is a worker's job

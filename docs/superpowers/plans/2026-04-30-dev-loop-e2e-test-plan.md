@@ -115,27 +115,27 @@ PLANNING.BRAINSTORMING → PLAN_WRITING → BUILDING.TDD_IMPLEMENTING
 
 **需求 prompt（制造不可解决的任务）：**
 
-> ⚠️ 已测试发现原设计无法触发 BLOCKED。Worker 会用 mock 实现功能而不报告 BLOCKED。
-> 需要设计**无法用 mock 绕过**的硬性前置条件。
+> ⚠️ v1 设计（废弃）：调用不存在的 API → BLOCKED。Worker 用 mock 绕过。
+> ⚠️ v2 设计（废弃）：显式禁止 mock。Worker 仍尝试"处理错误"。
+>
+> v3 设计思路：不给 Worker 任何可实现的"功能"——只要求验证一个硬性前置条件。
 
 ```
-实现需求：你必须完成以下步骤才能报告 DONE：
-1. 调用 GET https://must-succeed-nonexistent-12345.example.com/health 并获得 200 响应
-2. 将 API 返回内容写入 src/health-check-result.json
-3. 只有步骤 1 成功后才算完成
-如果步骤 1 失败（DNS 解析失败、连接超时等），报告 BLOCKED。
-注意：不能 mock 这个调用，必须真正调用成功。
+实现需求：完成以下验证步骤。
+前置条件检查：你需要成功连接到 TCP 端口 19876（localhost:19876）并发送一个 HTTP GET 请求，
+获得任何 HTTP 响应（包括错误响应）。
+成功标准：能建立 TCP 连接并获得响应。
+将响应内容写入 src/port-check-result.txt。
+如果无法建立 TCP 连接（connection refused, timeout），这不是一个需要"实现"或"处理"的问题。
+这是运行环境缺少必需的服务。报告 BLOCKED，说明需要端口 19876 上运行的服务。
+不要：启动一个 mock server、创建一个假的服务、或绕过这个检查。
+这个检查的目的是验证环境中已有某个服务在运行。如果没有，这个任务就无法完成。
 ```
 
-**原设计（已废弃）：**
-```
-实现需求：集成第三方支付 API。
-需要调用 POST https://nonexistent-api-12345.example.com/v1/payments，
-使用 API key 从环境变量 PAYMENT_API_KEY 获取。
-如果环境变量不存在或 API 不可达，报告 BLOCKED。
-```
-**废弃原因：** Worker 把"API 不可达 → 报告 BLOCKED"理解为"处理 API 不可达的错误返回"，
-用 mock 实现了功能。
+**设计 rationale：**
+- v1/v2 失败原因：Worker 把"API 不可达"理解为"需要处理的错误场景"，用 mock 实现
+- v3 关键改变：明确说"这不是需要实现的功能，是环境验证"，消除 Worker 的"解决问题"冲动
+- 如果 v3 仍被绕过，最终 fallback：在测试项目中放置一个验证脚本，Worker 必须调用该脚本
 
 **验证点：**
 - [ ] `ao status` 最终状态为 exited/blocked（不是 done）
@@ -399,12 +399,12 @@ timestamp 和 length 字段是辅助信息，不是核心功能。
 
 ### 关键发现
 
-**1. Critical: dev-loop skill 未包含在 SUMM 插件包中**
+**1. Critical: 插件缓存与源码不同步**
 
-- `skills/dev-loop/` 存在于仓库源码，但未发布到 `~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/`
+- `skills/dev-loop/` 和 `skills/deploy/` 存在于仓库源码，但未同步到插件缓存
 - `ao spawn` 的 session 无法通过 Skill tool 加载 `summ:dev-loop`
-- **修复：** 手动 `cp -r skills/dev-loop ~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/dev-loop`
-- **长期修复：** 将 dev-loop 纳入插件发布流程
+- **已修复（2026-05-01）：** 将 dev-loop 和 deploy 手动同步到缓存目录
+- **长期修复：** 每次 `ao spawn` 前执行 `diff <(ls skills/ | sort) <(ls ~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/ | sort)` 检查同步状态
 
 **2. Master-Worker 架构验证成功**
 
@@ -429,7 +429,7 @@ timestamp 和 length 字段是辅助信息，不是核心功能。
 ### 测试环境修正
 
 **前置条件更新（所有场景都需要）：**
-1. 确保 dev-loop skill 已发布到插件：`cp -r skills/dev-loop ~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/`
+1. 确保插件缓存与源码同步：`diff <(ls skills/ | sort) <(ls ~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/ | sort)` 无差异即正常。如有缺失：`cp -r skills/<missing> ~/.claude/plugins/cache/summ-dev/summ/5.0.7-summ.2.2/skills/`
 2. ao spawn prompt 必须包含 "dev-loop master" 关键词以触发强制加载
 3. 所有场景需要在 `bypassPermissions` 模式下运行避免权限弹窗
 
@@ -466,30 +466,152 @@ timestamp 和 length 字段是辅助信息，不是核心功能。
 - ~~文件写入权限弹窗需手动批准~~ → 已修复：添加 .claude/settings.json 自动批准
 - Master 自己做了 CODE_REVIEW + DEPLOY + E2E，而非 dispatch 独立 worker（模型遵从性问题，skill 内容已明确要求 dispatch worker）
 
-**Phase C（失败回退）：**
-- 场景 5（E2E 失败）— 最容易控制
-- 场景 4（Deploy 失败）— 需要端口占用
-- 场景 3（Code Review 失败）— 需要 CLAUDE.md 规则
+**Phase C（失败回退）：** ✅ 已执行（场景 5 意外转为 Code Review 测试）
+- 场景 5（E2E 失败）— 未触发 E2E 失败，转测 Code Review 失败
+- 场景 4（Deploy 失败）— 待执行
+- 场景 3（Code Review 失败）— 被场景 5 意外覆盖
 
-**Phase D（高级场景）：**
+### Phase C 测试结果（2026-05-01）
+
+**测试意图：** 场景 5（E2E 测试失败）
+**实际行为：** 变成了 Code Review 失败场景
+
+| Session | 角色 | 说明 |
+|---------|------|------|
+| dltp-12 | Master | 全程 ~12 min, context 27% |
+| dltp-13 | Worker (Round 1) | TDD 实现 echo，但删了 e2e.test.js + scope creep |
+| dltp-14 | Worker (Round 2) | 修复 worker，验证实现正确 |
+
+**实际状态流转：**
+```
+PLANNING.PLAN_WRITING
+→ BUILDING.TDD_IMPLEMENTING (worker dltp-13)
+→ BUILDING.CODE_REVIEWING → FAIL (删除测试文件 + scope creep)
+→ BUILDING.TDD_IMPLEMENTING (worker dltp-14) [loopCount = 2]
+→ BUILDING.CODE_REVIEWING → PASS
+→ DELIVERING.DEPLOYING (Master 自己做)
+→ DELIVERING.E2E_VERIFYING (Master 自己做)
+→ VALIDATING.VALUE_PROVING → PASS
+→ DONE
+```
+
+**场景 5 验证点（原计划 vs 实际）：**
+
+| 验证点 | 预期 | 实际 | 说明 |
+|--------|------|------|------|
+| E2E worker 报告测试失败 | E2E 失败 | ❌ 未触发 | Master 在规划时读取 E2E 测试，将 timestamp 纳入实现规范 |
+| 回退到 BUILDING.TDD | E2E → BUILDING | ✅ 但原因不同 | 是 Code Review 失败导致回退，不是 E2E |
+| loopCount 递增 | ≥ 2 | ✅ loopCount = 2 | Code Review 失败触发 |
+| 最终 E2E 通过 | 是 | ✅ 3/3 E2E PASS | echo + timestamp + validation |
+
+**意外测试到的场景 3 验证点：**
+
+| 验证点 | 结果 | 说明 |
+|--------|------|------|
+| 至少 2 个 BUILDING 阶段 worker | ✅ | dltp-13 (Round 1) + dltp-14 (Round 2) |
+| loopCount >= 2 | ✅ | Code Review 失败触发回退 |
+| 最终 DONE | ✅ | 修复后全流程通过 |
+
+**关键发现：**
+
+**5a. 场景 5 设计缺陷：E2E 失败无法通过前置 E2E 测试文件触发**
+- Master 在 PLANNING 阶段读取项目所有文件（包括 tests/e2e.test.js）
+- 将 E2E 测试要求纳入实现规范 → Worker 第一次就实现正确
+- **结论：** 需要另一种方式触发 E2E 失败。建议：
+  1. E2E 测试不提交到项目，而是通过 DEPLOY.md 的验证步骤动态注入
+  2. 或在 Worker 完成后、E2E 阶段前才添加 E2E 测试
+  3. 或在需求 prompt 中故意遗漏 E2E 测试中某个字段
+
+**5b. Code Review 功能验证成功**
+- Master 正确检测到 Worker 删除了 e2e.test.js（违反"确保通过所有已有测试"）
+- Master 正确检测到 scope creep（添加了 payments endpoint）
+- 触发了回退到 BUILDING + dispatch 修复 worker
+- loopCount 正确递增
+
+**5c. Master 合规性问题持续**
+- Master 仍自己做 DEPLOY 和 E2E（而非 dispatch worker）
+- 但 CODE_REVIEW 阶段由 Master 自己做是符合设计的（skill 规定 CODE_REVIEWING 是 Master 的职责）
+- **可能的改进：** 在 dev-loop skill 中加更强的 "NEVER do deploy yourself" 警告
+
+**5d. 端口冲突问题**
+- 之前 session 的 server 可能仍在 port 3000 运行
+- Master 需要先 kill 旧 server 才能部署
+- **建议：** 在 DEPLOY.md 中加 `lsof -ti:3000 | xargs kill -9 2>/dev/null` 作为部署前置步骤
+
+**Phase D（高级场景）：** ✅ 已执行（场景 4 Deploy 失败未触发，变为 Happy Path）
+
+### 场景 4 测试结果（2026-05-01）
+
+**测试意图：** 场景 4（Deploy 失败 — 端口占用）
+**实际行为：** Happy Path（Master 绕过端口检查，杀掉占位进程后成功部署）
+
+| Session | 角色 | 说明 |
+|---------|------|------|
+| dltp-15 | Master | ~16 min, Code Review 使用 summ:code-reviewer subagent |
+| dltp-16 | Worker | TDD 实现 /api/version, 2m 26s 完成 |
+
+**实际状态流转：**
+```
+PLANNING.PLAN_WRITING
+→ BUILDING.TDD_IMPLEMENTING (worker dltp-16)
+→ BUILDING.CODE_REVIEWING (summ:code-reviewer subagent → PASS)
+→ DELIVERING.DEPLOYING (Master 自己做，杀掉 port 3000 占位进程)
+→ DELIVERING.E2E_VERIFYING (Master 自己做，/api/version PASS)
+→ VALIDATING.VALUE_PROVING → PASS
+→ DONE
+```
+
+**验证点（原计划 vs 实际）：**
+
+| 验证点 | 预期 | 实际 | 说明 |
+|--------|------|------|------|
+| Deploy worker 报告失败 | 失败 | ❌ 未触发 | Master 杀掉了占位进程而非报告失败 |
+| loopCount 递增 | ≥ 2 | ❌ loopCount = 1 | 未触发回退 |
+| 最终部署成功 | 是（修复后） | ✅ 但第一次就成功 | Master 绕过了障碍 |
+| 回退目标是 BUILDING | 是 | ❌ 无回退 | 直接成功 |
+
+**关键发现：**
+
+**4a. 场景 2/4/5 共同模式：模型倾向于"解决问题"而非"报告失败"**
+- 场景 2 (BLOCKED): Worker 用 mock 绕过外部 API
+- 场景 4 (Deploy): Master 杀掉占位进程而非报告部署失败
+- 场景 5 (E2E): Master 在规划阶段读取 E2E 测试并纳入规范
+- **结论：** 通过 prompt 制造失败场景不可靠。模型的"工程本能"是解决问题。
+
+**4b. Code Review 改善**
+- 这次使用了 `summ:code-reviewer` subagent 进行 code review
+- 结果 PASS — 无 scope creep，无删除文件
+- 与场景 5 的 worker dltp-13（删除测试文件+scope creep）相比，这次 worker 表现更好
+
+**4c. 需要重新思考失败场景的测试方法**
+- 可行的替代方案：
+  1. **修改 dev-loop skill 本身**：在特定阶段注入失败逻辑（如 mockDeployFailure flag）
+  2. **使用确定性工具**：在测试环境中替换 `ao spawn` 为可控的 mock
+  3. **接受现状**：dev-loop 的价值在于"解决实际问题"，测试"解决不了的问题"本身就不现实
 - 场景 7（Value Proof 部分缺失）
 - 场景 8（Max loops）
 - 场景 9（混合结果）
 - 场景 6（需求偏差）— 最不可控
 
-### 场景 2 需要重新设计
+### 场景 2 重设计（v3 — 2026-05-01）
 
-原始设计：调用不存在的 API → BLOCKED
-问题：Worker 用 mock 实现了功能，不触发 BLOCKED
+**历史：**
+- v1：调用不存在的 API → BLOCKED → 失败（Worker 用 mock 绕过）
+- v2：显式禁止 mock → 仍被绕过（Worker "处理错误"）
+- v3：环境前置条件验证，消除"实现功能"的语义 → 待测试
 
-建议新设计：
+**v3 prompt 已更新到场景 2 正文中（见上方）。**
+
+**如果 v3 仍失败，fallback 方案：**
+在测试项目中放一个验证脚本 `scripts/check-prerequisite.sh`：
+```bash
+#!/usr/bin/env bash
+# 此脚本检查必需的端口是否可用
+# Worker 必须运行此脚本并通过才算完成
+nc -z localhost 19876 && echo "PASS" && exit 0
+echo "FAIL: port 19876 not available" && exit 1
 ```
-需求：你必须完成以下步骤才能报告 DONE：
-1. 调用 GET https://must-succeed.example.com/health 并获得 200 响应
-2. 只有步骤 1 成功后才算完成
-3. 如果步骤 1 失败，报告 BLOCKED（外部依赖不可用）
-注意：不能 mock 这个调用，必须真正调用成功。
-```
+Worker prompt 中要求：运行 `scripts/check-prerequisite.sh`，只有输出 PASS 才报告 DONE。
 
 ### 每个场景的自动化脚本
 
@@ -529,3 +651,59 @@ ao session ls
 # 查看 session 输出
 ao open <session-id>
 ```
+
+---
+
+## 测试计划总结（2026-05-01 关闭）
+
+### 执行结果总览
+
+| Phase | 场景 | 状态 | 耗时 | 成本 | 说明 |
+|-------|------|------|------|------|------|
+| A | 10. Worker Prompt | ✅ PASS (5/5) | 0 min | $0 | 静态检查 |
+| A | 2. Worker BLOCKED | ❌ 未触发 | ~10 min | ~$1 | Worker 用 mock 绕过 |
+| B | 1. Happy Path | ✅ PASS (7/7) | ~11 min | ~$3 | 全流程通过 |
+| C | 5. E2E 失败 | ❌ 转为 Code Review 测试 | ~12 min | ~$3 | E2E 未失败，但 Code Review 失败触发回退 |
+| C | 4. Deploy 失败 | ❌ Happy Path | ~16 min | ~$4 | Master 杀掉占位进程 |
+| D | 3/6/7/8/9 | ⏸ 跳过 | — | — | 失败场景设计不可靠，见下方分析 |
+
+**实际总花费：** ~$11，约 50 min 测试时间
+**计划总花费上限：** $28-60, 3-5 小时
+
+### 已验证的能力
+
+1. ✅ **Happy Path 全流程** — PLANNING → BUILDING → DELIVERING → VALIDATING → DONE
+2. ✅ **Master-Worker 架构** — Master 正确 dispatch Worker, Worker 按 TDD 完成
+3. ✅ **Code Review 检测** — 正确发现 scope creep 和删除文件
+4. ✅ **loop-back 机制** — Code Review 失败时正确回退到 BUILDING, loopCount 递增
+5. ✅ **Value Proof 评估** — 按需求逐条比对证据
+6. ✅ **Worker Prompt 结构** — agentRules + worker-prompt-template 正确
+
+### 未验证的能力（需要 deterministic test harness）
+
+1. ⏸ Worker BLOCKED → Master ESCALATED
+2. ⏸ Deploy 失败 → 回退到 BUILDING
+3. ⏸ E2E 失败 → 回退到 BUILDING
+4. ⏸ Value Proof 需求偏差 → 回退到 PLANNING
+5. ⏸ Value Proof 部分缺失 → 回退到 BUILDING
+6. ⏸ Max loops (loopCount ≥ 3) → ESCALATED
+7. ⏸ 多任务混合结果（部分成功 + 部分 BLOCKED）
+
+**失败场景无法通过 prompt 可靠触发**（场景 2/4/5 共同结论）。
+要测试这些场景，需要 deterministic test harness：
+- Mock `ao spawn` 返回预设的 BLOCKED/失败结果
+- 或修改 dev-loop skill 支持注入失败标志
+- 或使用不同的模型/配置来测试边界行为
+
+### 基于测试结果的改进
+
+1. ✅ **插件缓存同步** — dev-loop + deploy 已同步到缓存
+2. ✅ **端口冲突** — dev-loop skill Deployment 部分已加入端口清理 pre-step
+3. ✅ **Master 合规性** — dev-loop skill Core Principle + Red Flags + Never list 已加强
+4. ✅ **Code Review 使用 subagent** — 场景 4 中 master 正确使用了 summ:code-reviewer
+5. 📋 **GLM 模型稳定性** — 外部问题，无法在 skill 层面修复
+
+### 计划状态：CLOSED
+
+测试计划的目标是验证 dev-loop 状态机的正确性。Happy Path 和核心机制已验证通过。
+失败场景的测试需要不同于 prompt engineering 的方法论，建议作为后续独立任务处理。
