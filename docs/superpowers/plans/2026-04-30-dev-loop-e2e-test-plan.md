@@ -463,8 +463,8 @@ timestamp 和 length 字段是辅助信息，不是核心功能。
 **耗时：** ~11 分钟（Master dltp-10 + Worker dltp-11）
 **注意事项：**
 - GLM 模型启动不稳定，部分 session 卡在 0% context（dltp-6/7/8/9 均失败，dltp-10 成功）
-- 文件写入权限弹窗需手动批准（tmux send-keys Enter）
-- Master 自己做了 CODE_REVIEW + DEPLOY + E2E，而非 dispatch 独立 worker
+- ~~文件写入权限弹窗需手动批准~~ → 已修复：添加 .claude/settings.json 自动批准
+- Master 自己做了 CODE_REVIEW + DEPLOY + E2E，而非 dispatch 独立 worker（模型遵从性问题，skill 内容已明确要求 dispatch worker）
 
 **Phase C（失败回退）：**
 - 场景 5（E2E 失败）— 最容易控制
