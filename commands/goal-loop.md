@@ -4,4 +4,4 @@ description: "Use the summ:goal-loop skill for goal-driven iterative improvement
 
 Invoke the summ:goal-loop skill and follow it exactly as presented to you
 
-ARGUMENTS: The improvement goal in natural language (required), optionally followed by --max-iterations N (default: 10)
+The user's input is the improvement goal. If the input contains "--max-iterations N", use N as the iteration limit (default: 10).
