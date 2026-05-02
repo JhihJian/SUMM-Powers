@@ -7,40 +7,25 @@ description: Use when automating a full development lifecycle from requirement t
 
 Automate the full lifecycle of a development requirement: planning, TDD implementation, code review, deployment, E2E verification, and value proof — with loop-back on failure and escalation when stuck.
 
-**Core principle:** A master agent orchestrates worker agents through a fixed pipeline. Master agent never writes code, never deploys, and never runs E2E tests. It coordinates, reviews, and judges. Workers execute using SUMM skills. Every execution step (TDD, deploy, E2E) goes through `ao spawn` — no exceptions.
+**Input:** A confirmed design spec (produced by `summ:brainstorming`). dev-loop does not include brainstorming — run brainstorming separately before invoking dev-loop.
 
-**Why a loop:** Failures are normal in development. Rather than stopping on failure, this workflow diagnoses the failure type, returns to the appropriate phase, and retries. Human is involved only at escalation or post-hoc review.
+**Core principle:** You are a master agent. Your job is to dispatch workers, review their output, and make decisions. You do not write code, run commands, or edit files directly. Instead you delegate execution to worker agents.
 
-## When to Use
+## Dispatching Workers
 
-```dot
-digraph when_to_use {
-    "Have a development requirement?" [shape=diamond];
-    "Need full lifecycle (plan → deploy → verify)?" [shape=diamond];
-    "Can break into independent tasks?" [shape=diamond];
-    "dev-loop" [shape=box style=filled fillcolor=lightgreen];
-    "subagent-driven-development" [shape=box];
-    "to-do-it" [shape=box];
-    "brainstorm first" [shape=box];
+Master delegates execution to workers. Use whichever mechanism is available in your environment:
 
-    "Have a development requirement?" -> "Need full lifecycle (plan → deploy → verify)?" [label="yes"];
-    "Have a development requirement?" -> "brainstorm first" [label="no - unclear"];
-    "Need full lifecycle (plan → deploy → verify)?" -> "Can break into independent tasks?" [label="yes"];
-    "Need full lifecycle (plan → deploy → verify)?" -> "subagent-driven-development" [label="no - just implement"];
-    "Can break into independent tasks?" -> "dev-loop" [label="yes"];
-    "Can break into independent tasks?" -> "to-do-it" [label="no - single task"];
-}
-```
+- **Agent tool** (Claude Code built-in): `Agent` tool with a descriptive prompt — preferred when running inside Claude Code
+- **ao spawn** (Agent-Orchestrator CLI): `ao spawn <project> --prompt "<worker prompt>"` — use when running in an AO-managed environment
+- **Other**: any mechanism that creates an isolated agent session with its own context
 
-**Use dev-loop when:**
-- You have a clear development requirement (issue, user request, or spec)
-- The requirement needs implementation + deployment + verification
-- The work can be decomposed into tasks
+Regardless of mechanism, every worker dispatch needs:
+1. A clear task description (what to implement)
+2. The SUMM skill to load (how to work)
+3. Working directory (where to work)
+4. Report format (how to report back)
 
-**Don't use dev-loop when:**
-- Quick fix or single change → use `summ:to-do-it`
-- Only need implementation (no deploy/verify) → use `summ:subagent-driven-development`
-- Requirement is unclear → use `summ:brainstorming` first
+Worker prompt template: `skills/dev-loop/worker-prompt-template.md`
 
 ## Setup
 
@@ -50,20 +35,14 @@ Before first use, run the init script on your target project:
 bash skills/dev-loop/scripts/init.sh /path/to/project --name my-project
 ```
 
-This generates:
-- `agent-orchestrator.yaml` — project config with SUMM agentRules
-- `.claude/settings.json` — auto-approve permissions for spawned sessions
-- `DEPLOY.md` — deployment template (edit with actual steps)
+This generates `agent-orchestrator.yaml`, `.claude/settings.json`, and `DEPLOY.md`.
 
 ## Workflow State Machine
-
-### Phases and Sub-states
 
 ```
 Phase              Sub-state                  Actor
 ──────────────────────────────────────────────────────────────
-PLANNING           BRAINSTORMING              Master Agent
-                   PLAN_WRITING               Master Agent
+PLANNING           PLAN_WRITING               Master Agent
 
 BUILDING           TDD_IMPLEMENTING           Worker × N (Master dispatches)
                    CODE_REVIEWING             Master Agent
@@ -78,9 +57,6 @@ VALIDATING         VALUE_PROVING              Master Agent
 ### Transition Rules
 
 ```
-PLANNING.BRAINSTORMING
-  → PLANNING.PLAN_WRITING     [brainstorming produces design]
-
 PLANNING.PLAN_WRITING
   → BUILDING.TDD_IMPLEMENTING [plan with tasks produced]
 
@@ -102,227 +78,115 @@ DELIVERING.E2E_VERIFYING
 
 VALIDATING.VALUE_PROVING
   → VALIDATING.COMPLETING     [requirement satisfied]
-  → PLANNING.BRAINSTORMING    [requirement misunderstood]
+  → PLANNING.PLAN_WRITING     [requirement misunderstood → re-plan]
   → BUILDING.TDD_IMPLEMENTING [partial implementation]
 
 VALIDATING.COMPLETING
   → DONE                      [evidence archived, human notified]
 ```
 
-### Loop-back Decision Table
+**Every loop-back increments loopCount.** Initial value is 1 (first pass). When loopCount reaches maxLoops (default: 3), transition to ESCALATED regardless of failure type.
 
-| Failure source | Return to | Reason |
-|----------------|-----------|--------|
-| Code review issues | BUILDING.TDD | Code quality problems |
-| Deploy failure | BUILDING.TDD | Code or config issue |
-| E2E test failure | BUILDING.TDD | Bugs found |
-| Value proof: wrong understanding | PLANNING | Requirement gap |
-| Value proof: incomplete work | BUILDING.TDD | Missing features |
-| Loop count ≥ 3 | ESCALATED | Force human intervention |
+## Phase Instructions
 
-**Every loop-back increments loopCount.** Initial value is 1 (first pass). Each loop-back adds 1. When loopCount reaches maxLoops (default: 3), transition to ESCALATED regardless of failure type.
+### PLANNING.PLAN_WRITING
 
-## Skills Used at Each Phase
+Do these steps in order:
 
-| Phase | Skill | Who |
-|-------|-------|-----|
-| PLANNING.BRAINSTORMING | `summ:brainstorming` | Master |
-| PLANNING.PLAN_WRITING | `summ:writing-plans` | Master |
-| BUILDING.TDD_IMPLEMENTING | `summ:test-driven-development` | Worker |
-| BUILDING.CODE_REVIEWING | `summ:requesting-code-review` | Master |
-| DELIVERING.DEPLOYING | `summ:deploy` | Worker |
-| DELIVERING.E2E_VERIFYING | Playwright / API tests | Worker |
-| VALIDATING.VALUE_PROVING | Built into this skill | Master |
+1. Load `summ:writing-plans` via the Skill tool
+2. Read the design spec from your prompt
+3. Write the plan to `docs/superpowers/plans/`
+4. The plan MUST include: task list with IDs, dependency graph, and which SUMM skill each task uses
 
-## Worker Dispatch
+### BUILDING.TDD_IMPLEMENTING
 
-### How to Spawn a Worker
+Do these steps in order:
 
-Use Agent-Orchestrator CLI to create isolated worker sessions:
+1. Read the plan file. Extract the task list.
+2. Identify which tasks can run in parallel (no dependencies) and which must be sequential.
+3. For **each task**, construct a worker prompt using `skills/dev-loop/worker-prompt-template.md`:
+   - **Task title:** from the plan
+   - **Task description:** paste the full text from the plan (do not tell worker to read a file)
+   - **Skill to load:** `summ:test-driven-development`
+   - **Working directory:** current project path
+4. **Dispatch worker(s)** using your available mechanism:
+   - Parallel tasks: dispatch multiple workers at once
+   - Sequential tasks: wait for each to finish before dispatching the next
+5. Wait for all workers to complete. Collect their output.
+6. Check what changed: read `git diff main..HEAD` in the project directory.
+7. Transition to CODE_REVIEWING.
 
-```bash
-ao spawn <project> --prompt "<task prompt from worker-prompt-template.md>"
-```
+**If a worker reports BLOCKED:** assess the cause. Context problem → provide context and re-dispatch. External blocker → ESCALATED. Mixed DONE/BLOCKED → proceed with completed tasks, handle blocked ones separately.
 
-**System prompt setup:** Worker system instructions (skill loading, report format, scope constraints) are configured via `agentRules` in `agent-orchestrator.yaml`. See `docs/superpowers/examples/dev-loop-agent-orchestrator.yaml` for the full configuration.
+### BUILDING.CODE_REVIEWING
 
-**Worker prompt construction:**
-1. Fill `./worker-prompt-template.md` with task-specific content
-2. Set `SKILL_TO_LOAD` to the skill the worker must use
-3. Paste full task text (never make worker read the plan file)
-4. Set working directory to the project's worktree path
+Do these steps in order:
 
-### Dispatch Strategy
+1. Load `summ:requesting-code-review` via the Skill tool.
+2. Read the diff: `git diff main..HEAD` in the project directory.
+3. Compare each changed file against the task spec from the plan. Check:
+   - All requirements from the task spec are implemented?
+   - Any files changed that are NOT related to the task? (scope creep)
+   - Any existing files deleted that should not be?
+4. **If issues found:**
+   - Write a specific list of issues per task
+   - Go back to TDD_IMPLEMENTING step 3, but fill the worker prompt with fix instructions instead of the original task
+   - loopCount++
+5. **If all pass:** transition to DELIVERING.DEPLOYING.
 
-Read the plan's task dependency graph:
-- **Independent tasks**: Dispatch in parallel (one `ao spawn` per task)
-- **Sequential tasks**: Dispatch one at a time, wait for DONE before next
-- **Deploy/E2E**: Always single-worker, sequential (deploy first, then E2E)
+### DELIVERING.DEPLOYING
 
-### Monitoring Workers
+Do these steps in order:
 
-After dispatching, poll worker status:
+1. Read `DEPLOY.md` from the project.
+2. Construct a deploy worker prompt:
+   - **Task title:** "Deploy the application"
+   - **Task description:** port cleanup command + full content of DEPLOY.md
+   - **Skill to load:** `summ:deploy`
+   - **Working directory:** current project path
+3. Dispatch one deploy worker.
+4. Wait for completion. Read the worker output.
+5. Check: "Server running" or equivalent → success. Error → failure.
+6. **Success:** record deploy URL as evidence, transition to E2E_VERIFYING.
+7. **Failure:** transition back to BUILDING.TDD_IMPLEMENTING with fix instructions, loopCount++.
 
-```bash
-ao status <session-id>
-```
+### DELIVERING.E2E_VERIFYING
 
-**Activity states to handle:**
-- `active` / `working` → Continue waiting
-- `idle` / `ready` → Worker may have finished, check output
-- `waiting_input` → Worker is asking a question, provide answer via `ao send`
-- `blocked` / `exited` → Worker failed, assess and handle
+Do these steps in order:
 
-**Polling cadence:** Check every 2-5 minutes. Do not poll continuously — use the time for other coordination work.
+1. Read the E2E strategy from the plan (which tests to run, expected results).
+2. Construct an E2E worker prompt:
+   - **Task title:** "Run E2E verification"
+   - **Task description:** deploy URL + exact test commands + expected outcomes
+   - **Skill to load:** none (E2E workers follow prompt instructions directly)
+   - **Working directory:** current project path
+3. Dispatch one E2E worker.
+4. Wait for completion. Read the worker output.
+5. Check: all tests pass → success. Any fail → collect failure details.
+6. **Success:** transition to VALUE_PROVING.
+7. **Failure:** transition back to BUILDING.TDD_IMPLEMENTING with bug details, loopCount++.
 
-**Timeout:** If a worker exceeds 30 minutes without state change, treat as BLOCKED.
+### VALIDATING.VALUE_PROVING
 
-### Handling Worker Reports
+Do these steps in order:
 
-Workers report one of four statuses:
+1. Re-read the original requirement from your prompt.
+2. Read the actual diff: `git diff main..HEAD --stat` then `git diff main..HEAD`.
+3. For each requirement point, check if the diff contains evidence that it is satisfied.
+4. Check for scope creep: are there changes NOT related to any requirement point?
+5. **PASS:** every requirement has evidence, no unrequested changes → transition to COMPLETING.
+6. **GAP (misunderstood):** what was built doesn't match what was asked → transition to PLANNING.PLAN_WRITING, loopCount++.
+7. **GAP (partial):** some requirement points have no evidence → transition to BUILDING.TDD_IMPLEMENTING, loopCount++.
 
-**DONE:** Task completed successfully. Collect output, proceed to next task or code review.
+### VALIDATING.COMPLETING
 
-**DONE_WITH_CONCERNS:** Completed but flagged doubts. Read concerns before proceeding. Address correctness/scope concerns. Note observations for later.
+1. Write a value proof document to `docs/superpowers/` containing: requirement text, plan summary, implementation summary (files changed, key decisions), test results, deploy info, and evaluation.
+2. Notify human with: summary, PR links, deploy URL, value proof location.
 
-**NEEDS_CONTEXT:** Worker needs more information. Provide missing context and send via `ao send`.
+### ESCALATION
 
-**BLOCKED:** Worker cannot complete. Assess:
-1. Context problem → provide more context, re-dispatch
-2. Reasoning problem → re-dispatch with more capable model
-3. Task too large → break into smaller pieces, re-dispatch
-4. External blocker → ESCALATED
+1. Compile diagnostic report: requirement, number of loops, what failed at each loop, what was tried, current state.
+2. Notify human with full report.
+3. Pause — do not continue until human responds.
 
-**Mixed results (some DONE, some BLOCKED):** When parallel workers return mixed statuses, do not block completed work on a single failure. Re-dispatch or escalate only the blocked task(s). Proceed with completed tasks through the pipeline. Value proof evaluates only the delivered scope.
-
-## Code Review (BUILDING.CODE_REVIEWING)
-
-After all workers report DONE:
-
-1. Load `summ:requesting-code-review`
-2. For each worker's PR:
-   a. Read the diff: `gh pr diff <pr-url>`
-   b. Compare against the task spec from the plan
-   c. Check for: missing requirements, extra work, code quality
-3. If issues found:
-   - Document specific issues per PR
-   - Transition back to BUILDING.TDD_IMPLEMENTING
-   - Dispatch fix workers with specific review feedback
-   - increment loopCount
-4. If all PRs pass:
-   - Transition to DELIVERING.DEPLOYING
-
-**Never** skip code review. **Never** proceed with unfixed issues.
-
-## Deployment (DELIVERING.DEPLOYING)
-
-1. Dispatch one deploy worker:
-   ```bash
-   ao spawn <project> --prompt "Deploy the application following DEPLOY.md"
-   ```
-   The deploy prompt MUST include a port cleanup pre-step:
-   ```
-   Before starting the server, kill any existing process on the target port:
-   lsof -ti:$PORT | xargs kill -9 2>/dev/null; true
-   Then follow DEPLOY.md steps.
-   ```
-2. Worker reads DEPLOY.md, executes deployment steps
-3. On success: record deploy URL/environment info as evidence, transition to E2E_VERIFYING
-4. On failure: diagnose, transition back to BUILDING.TDD_IMPLEMENTING, increment loopCount
-
-## E2E Verification (DELIVERING.E2E_VERIFYING)
-
-1. The plan produced in PLANNING.PLAN_WRITING specifies which E2E strategy to use:
-   - **Existing E2E tests**: Run against deployed environment
-   - **New E2E tests**: Written during BUILDING phase, run now
-   - **Manual API verification**: Worker makes real API calls
-2. Dispatch one E2E worker:
-   ```bash
-   ao spawn <project> --prompt "Run E2E verification: <strategy and commands from plan>"
-   ```
-   Note: E2E workers do not load a SUMM skill. They operate from the instructions in the prompt (test commands, target environment, expected results).
-3. On success: collect test results as evidence, transition to VALUE_PROVING
-4. On failure: collect failing test details, transition back to BUILDING.TDD_IMPLEMENTING, increment loopCount
-
-## Value Proof (VALIDATING.VALUE_PROVING)
-
-The master agent evaluates whether the delivery satisfies the original requirement.
-
-**Evidence to collect:**
-1. Original requirement text
-2. Plan (what was intended)
-3. Worker reports (what was implemented)
-4. Code review results (quality gate passed)
-5. Deploy status and URL
-6. E2E test results
-
-**Evaluation process:**
-1. Re-read the original requirement
-2. For each requirement point, check if evidence proves it's satisfied
-3. Read the actual diff (`git diff <base>..<head>`) — do not trust reports alone
-4. Check for scope creep (extra features not in requirement)
-
-**Decision:**
-- **PASS**: Every requirement point has evidence. No unrequested features. → COMPLETING
-- **GAP (requirement misunderstood)**: What was built doesn't match what was asked. → PLANNING.BRAINSTORMING, loopCount++
-- **GAP (partial implementation)**: Some requirement points have no evidence. → BUILDING.TDD_IMPLEMENTING, loopCount++
-
-**Never** accept "close enough." Every point in the requirement must have corresponding evidence.
-
-## Completing (VALIDATING.COMPLETING)
-
-1. **Archive evidence**: Write a value proof document containing:
-   - Requirement (original text)
-   - Plan summary
-   - Implementation summary (files changed, key decisions)
-   - Test results
-   - Deploy info
-   - Value proof evaluation
-2. **Notify human**: Send completion notification with:
-   - Summary of what was delivered
-   - Link to PR(s)
-   - Link to deployed environment
-   - Value proof document location
-
-## Escalation
-
-When transitioning to ESCALATED:
-1. **Compile diagnostic report**:
-   - Original requirement
-   - Number of loops attempted
-   - What failed at each loop
-   - What was tried to fix it
-   - Current state (partial work, blockers)
-2. **Notify human** with the full diagnostic report
-3. **Pause workflow** — do not continue until human responds
-
-**Escalation triggers:**
-- loopCount ≥ maxLoops (default: 3)
-- Worker BLOCKED and unresolvable
-- Master agent cannot determine failure type
-
-## Red Flags
-
-| Thought | Reality |
-|---------|---------|
-| "The deploy probably worked" | Verify with evidence, not assumptions |
-| "Workers completed, that's enough" | Code review is mandatory, not optional |
-| "E2E tests are nice to have" | E2E verification is a gate, not a suggestion |
-| "Value proof is just a formality" | This is where wrong requirements get caught |
-| "One more loop will fix it" | If loopCount is already 2, the problem may be deeper |
-| "I'll just fix this myself" | Master agent never writes code. Dispatch a worker |
-| "I'll deploy it myself, it's faster" | NO. Deploy MUST go through `ao spawn`. Master does not run servers |
-| "I'll just run the E2E tests myself" | NO. E2E MUST go through `ao spawn`. Master collects results, never executes tests |
-| "Skip review, the worker self-reviewed" | Self-review and code review serve different purposes |
-| "Deploy failed, try again immediately" | Diagnose first — re-deploying the same code will fail again |
-
-**Never:**
-- Skip any phase or sub-state
-- Proceed with unfixed issues
-- Exceed maxLoops without escalating
-- Write code as the master agent
-- Deploy or run E2E as the master agent — always use `ao spawn`
-- Deploy without passing code review
-- Run E2E without successful deployment
-- Accept value proof without reading the actual diff
-- Execute `npm start`, `npm run test:e2e`, or any server command directly — that is a worker's job
+**Triggers:** loopCount ≥ maxLoops, worker BLOCKED and unresolvable, or indeterminate failure.
