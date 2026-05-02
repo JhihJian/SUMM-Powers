@@ -14,7 +14,7 @@ echo "Test 1: Skill loading..."
 
 output=$(run_claude "What is the goal-loop skill? Describe its purpose briefly." 30)
 
-if assert_contains "$output" "goal-loop\|Goal Loop\|Goal loop" "Skill is recognized"; then
+if assert_contains "$output" "[Gg]oal.[Ll]oop" "Skill is recognized"; then
     : # pass
 else
     exit 1
