@@ -40,17 +40,13 @@ Goal Loop is a goal-driven continuous improvement skill. You receive a high-leve
 
 ## Pre-flight Check
 
-Before entering the loop, perform these checks:
+**Silent by default.** Do not announce these checks to the user. Only speak up if a conflict is found.
 
-1. **Check for active dev-loop plans.** Look for plan files in `docs/superpowers/plans/` with a status indicating active work. If found:
-   - Warn: "Active dev-loop plan detected. Running goal-loop simultaneously may cause conflicts."
-   - Ask the user whether to proceed or cancel.
-   - If user confirms: record acknowledgment in state file and continue.
-   - If user cancels: exit immediately.
+1. **Check for active dev-loop plans** — scan `docs/superpowers/plans/` for plan files. If none found, proceed silently. If found, warn the user and ask whether to proceed or cancel.
 
-2. **Check for existing goal-loop state file.** Look for `.claude/goal-loop-state.md`.
-   - If found with status `ACTIVE`: ask whether to resume or restart.
-   - If found with status `COMPLETED` or `ABORTED`: create a fresh state file.
+2. **Check for existing goal-loop state** — check `.claude/goal-loop-state.md`. If absent or status is `COMPLETED`/`ABORTED`, proceed silently with a fresh state file. If status is `ACTIVE`, ask the user whether to resume or restart.
+
+No output, no logging, no "checking..." messages unless a conflict is detected.
 
 ## The Loop
 
