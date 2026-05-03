@@ -87,6 +87,7 @@ For each todo: mark in_progress → execute → mark completed
 2. **Mark SUMM-Todo done** - `todo done <id> -m "Result of task"` (BLOCKING: cannot clear TodoWrite until done)
 3. Summarize changes
 4. Clear TodoWrite
+5. If project has a `DEPLOY.md` or clearly deployable target, suggest: "Done! Want to deploy and verify? (summ:deploy-and-verify)"
 
 ## Red Flags - You're Rationalizing
 
