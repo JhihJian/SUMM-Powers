@@ -89,7 +89,7 @@ cmd_summary() {
     echo "=== Skill Telemetry Summary ==="
     echo "Total invocations: ${total_invoked}"
     echo "Unique skills: ${unique_skills}"
-    echo "Completion rate: ${total_completed}/${total_invoked} ($(jq -n --argj c "$total_completed" --argj i "$total_invoked" 'if $i == 0 then "N/A" else (($c / $i) * 100 | round | tostring + "%") end'))"
+    echo "Completion rate: ${total_completed}/${total_invoked} ($(jq -n --argjson c "$total_completed" --argjson i "$total_invoked" 'if $i == 0 then "N/A" else (($c / $i) * 100 | round | tostring + "%") end'))"
 
     echo ""
     echo "Top skills:"
@@ -153,7 +153,7 @@ cmd_recent() {
     fi
 
     echo "=== Recent ${n} invocations ==="
-    jq -s --argjson n "$n" '
+    jq -s --argjson n "$n" -r '
         sort_by(.ts) | reverse | .[0:$n] | .[] |
         "\(.ts) [\(.session_id[0:8])] \(.event) \(.skill)\(if .duration_ms then " (\((.duration_ms / 1000 | round))s)" else "" end)"
     ' <<< "$data" | head -"$n"
@@ -169,7 +169,7 @@ cmd_paths() {
     fi
 
     echo "=== Workflow Paths (top 10) ==="
-    jq -s '
+    jq -s -r '
         group_by(.session_id)
         | map(
             map(select(.event == "invoked") | .skill)
