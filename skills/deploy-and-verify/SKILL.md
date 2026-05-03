@@ -81,3 +81,7 @@ If FAILED at deploy or verify stage:
 **Works after:** `finishing-a-development-branch`
 **Works before:** `value-proof` (optional)
 **Uses convention from:** `deploy` skill (DEPLOY.md)
+
+**Relationship with `deploy` skill:** The `deploy` skill handles DEPLOY.md awareness and maintenance — it reminds you to update DEPLOY.md when infra changes. This skill (`deploy-and-verify`) handles actual deployment execution and verification. Use `deploy` for context, `deploy-and-verify` for action.
+
+**If deployment is not needed** (e.g., library package, skill-only repo): skip this skill and go directly to `value-proof` or simply declare the work done.

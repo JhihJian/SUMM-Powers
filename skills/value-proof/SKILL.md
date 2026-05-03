@@ -116,3 +116,5 @@ Scan the diff for changes NOT related to any requirement point:
 
 **Works after:** `deploy-and-verify` (or directly after `finishing-a-development-branch` if no deployment needed)
 **Uses:** `summ:verification-before-completion` mindset — evidence before claims
+
+**After value-proof:** If PASS, the delivery is complete — notify the user with the verdict and summary. If PARTIAL/MISMATCH/SCOPE_CREEP, the report's "Recommended Next Action" tells the agent what to do (usually go back to implementation or re-plan). No further skill needed.
