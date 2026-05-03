@@ -4,6 +4,31 @@ set -euo pipefail
 TELEM_DIR="${HOME}/.claude/skill-telemetry"
 LOG_DIR="${TELEM_DIR}/logs"
 
+# Rotate old logs on each run
+rotate_logs() {
+    local config="${TELEM_DIR}/config.json"
+    local retention_days
+    retention_days=$(jq -r '.retention_days // 90' "$config" 2>/dev/null || echo "90")
+
+    if [ ! -d "$LOG_DIR" ]; then
+        return 0
+    fi
+
+    local cutoff
+    cutoff=$(date -u -d "-${retention_days} days" +%Y-%m-%d 2>/dev/null || date -u -v-"${retention_days}"d +%Y-%m-%d 2>/dev/null || return 0)
+
+    for f in "${LOG_DIR}"/*.jsonl; do
+        [ -f "$f" ] || continue
+        local file_date
+        file_date=$(basename "$f" .jsonl)
+        if [ "$file_date" \< "$cutoff" ]; then
+            rm "$f"
+        fi
+    done
+}
+
+rotate_logs
+
 # Parse arguments
 COMMAND="${1:-help}"
 shift 2>/dev/null || true
