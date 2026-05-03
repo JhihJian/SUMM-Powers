@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MODE="${1:-}"
+TELEM_DIR="${HOME}/.claude/skill-telemetry"
+LOG_DIR="${TELEM_DIR}/logs"
+CONFIG="${TELEM_DIR}/config.json"
+SESSION_FILE="${TELEM_DIR}/.current-session"
+INDEX_FILE="${TELEM_DIR}/sessions-index.json"
+
+# Read config
+enabled=$(jq -r 'if has("enabled") then (.enabled | tostring) else "true" end' "$CONFIG" 2>/dev/null || echo "true")
+if [ "$enabled" != "true" ]; then
+    exit 0
+fi
+
+# Read session ID
+session_id=""
+if [ -f "$SESSION_FILE" ]; then
+    session_id=$(cat "$SESSION_FILE")
+fi
+
+# Ensure log dir exists
+mkdir -p "$LOG_DIR"
+
+# Read stdin JSON
+input_json=$(cat)
+
+# Extract skill name from input
+skill_name=$(printf '%s' "$input_json" | jq -r '.tool_input.skill // .tool_input.name // "unknown"' 2>/dev/null || echo "unknown")
+
+# Current timestamp
+ts=$(date -u +"%Y-%m-%dT%H:%M:%S.%3NZ")
+
+# Today's log file (UTC)
+today=$(date -u +"%Y-%m-%d")
+log_file="${LOG_DIR}/${today}.jsonl"
+
+if [ "$MODE" = "pre" ]; then
+    # Extract args summary (truncate to 200 chars)
+    args_summary=$(printf '%s' "$input_json" | jq -r '.tool_input.args // ""' 2>/dev/null | head -c 200)
+
+    # Write invoked event
+    jq -n -c \
+        --arg ts "$ts" \
+        --arg sid "$session_id" \
+        --arg skill "$skill_name" \
+        --arg args "$args_summary" \
+        '{ts: $ts, session_id: $sid, event: "invoked", skill: $skill, args_summary: $args, duration_ms: null}' \
+        >> "$log_file"
+
+elif [ "$MODE" = "post" ]; then
+    # Calculate duration: find most recent invoked event for same skill+session
+    duration_ms="null"
+    if [ -f "$log_file" ] && [ -n "$session_id" ]; then
+        invoked_ts=$(jq -r "select(.session_id == \"$session_id\" and .skill == \"$skill_name\" and .event == \"invoked\") | .ts" "$log_file" 2>/dev/null | tail -1)
+        if [ -n "$invoked_ts" ] && [ "$invoked_ts" != "null" ]; then
+            invoked_epoch=$(date -d "$invoked_ts" +%s%3N 2>/dev/null || echo "0")
+            now_epoch=$(date -d "$ts" +%s%3N 2>/dev/null || echo "0")
+            if [ "$invoked_epoch" != "0" ] && [ "$now_epoch" != "0" ]; then
+                duration_ms=$((now_epoch - invoked_epoch))
+            fi
+        fi
+    fi
+
+    # Write completed event
+    jq -n -c \
+        --arg ts "$ts" \
+        --arg sid "$session_id" \
+        --arg skill "$skill_name" \
+        --argjson dur "$duration_ms" \
+        '{ts: $ts, session_id: $sid, event: "completed", skill: $skill, args_summary: null, duration_ms: $dur}' \
+        >> "$log_file"
+fi
+
+# Update sessions index (increment skills_invoked for pre events)
+if [ "$MODE" = "pre" ] && [ -f "$INDEX_FILE" ] && [ -n "$session_id" ]; then
+    now_ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    tmp_index=$(mktemp)
+    jq --arg sid "$session_id" \
+       --arg ts "$now_ts" \
+       --arg file "${today}.jsonl" \
+       'if .sessions[$sid] then .sessions[$sid].skills_invoked += 1 | .sessions[$sid].last_activity = $ts else .sessions[$sid] = {"started": $ts, "last_activity": $ts, "skills_invoked": 1, "files": [$file]} end' \
+       "$INDEX_FILE" > "$tmp_index" && mv "$tmp_index" "$INDEX_FILE"
+fi
