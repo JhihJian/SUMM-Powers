@@ -70,9 +70,13 @@ Based on feedback:
 ### Step 5: Complete Development
 
 After all tasks complete and verified:
-- Announce: "I'm using the finishing-a-development-branch skill to complete this work"
-- **REQUIRED SUB-SKILL:** Use summ:finishing-a-development-branch
-- Follow that skill to verify tests, present options, execute choice
+1. If project has a deployable target (DEPLOY.md, docker-compose.yml, HTTP service):
+   - Announce: "I'm using the deploy-and-verify skill to deploy and verify"
+   - **OPTIONAL SUB-SKILL:** Use summ:deploy-and-verify
+   - Follow that skill to deploy and verify
+2. Announce: "I'm using the finishing-a-development-branch skill to complete this work"
+3. **REQUIRED SUB-SKILL:** Use summ:finishing-a-development-branch
+4. Follow that skill to verify tests, present options, execute choice
 ## When to Stop and Ask for Help
 **STOP executing immediately when:**
 - Hit a blocker mid-batch (missing dependency, test fails, instruction unclear)
@@ -97,4 +101,5 @@ After all tasks complete and verified:
 **Required workflow skills:**
 - **summ:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
 - **summ:writing-plans** - Creates the plan this skill executes
+- **summ:deploy-and-verify** - Deploy and verify after all tasks (if project has deployable target)
 - **summ:finishing-a-development-branch** - Complete development after all tasks
