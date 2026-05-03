@@ -191,11 +191,6 @@ Done!
 - Parallel-safe (subagents don't interfere)
 - Subagent can ask questions (before AND during work)
 
-**vs. Executing Plans:**
-- Same session (no handoff)
-- Continuous progress (no waiting)
-- Review checkpoints automatic
-
 **Efficiency gains:**
 - No file reading overhead (controller provides full text)
 - Controller curates exactly what context is needed
@@ -257,5 +252,5 @@ Done!
 **Subagents should use:**
 - **summ:test-driven-development** - Subagents follow TDD for each task
 
-**Alternative workflow:**
-- **summ:executing-plans** - Use for parallel session instead of same-session execution
+**Fallback (internal):**
+- **summ:executing-plans** - Auto-invoked on platforms without subagent support
