@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TELEM_DIR="${HOME}/.claude/skill-telemetry"
+LOG_DIR="${TELEM_DIR}/logs"
+
+# Parse arguments
+COMMAND="${1:-help}"
+shift 2>/dev/null || true
+
+FROM_DATE=""
+TO_DATE=""
+
+# Parse flags
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --from) FROM_DATE="$2"; shift 2 ;;
+        --to) TO_DATE="$2"; shift 2 ;;
+        --n) N_COUNT="$2"; shift 2 ;;
+        *) shift ;;
+    esac
+done
+
+collect_log_files() {
+    local from="${FROM_DATE:-}"
+    local to="${TO_DATE:-}"
+
+    if [ -n "$from" ] && [ -n "$to" ]; then
+        local current="$from"
+        while [ "$current" \< "$to" ] || [ "$current" = "$to" ]; do
+            [ -f "${LOG_DIR}/${current}.jsonl" ] && cat "${LOG_DIR}/${current}.jsonl"
+            current=$(date -d "$current + 1 day" +%Y-%m-%d 2>/dev/null || echo "")
+            [ -z "$current" ] && break
+        done
+    elif [ -n "$from" ]; then
+        cat "${LOG_DIR}"/*.jsonl 2>/dev/null | jq -r "select(.ts >= \"${from}\")"
+    elif [ -n "$to" ]; then
+        cat "${LOG_DIR}"/*.jsonl 2>/dev/null | jq -r "select(.ts <= \"${to}T23:59:59\")"
+    else
+        cat "${LOG_DIR}"/*.jsonl 2>/dev/null
+    fi
+}
+
+cmd_summary() {
+    local data
+    data=$(collect_log_files)
+
+    if [ -z "$data" ]; then
+        echo "No telemetry data found."
+        exit 0
+    fi
+
+    local total_invoked
+    total_invoked=$(jq -s '[.[] | select(.event == "invoked")] | length' <<< "$data")
+
+    local unique_skills
+    unique_skills=$(jq -s '[.[] | select(.event == "invoked") | .skill] | unique | length' <<< "$data")
+
+    local total_completed
+    total_completed=$(jq -s '[.[] | select(.event == "completed")] | length' <<< "$data")
+
+    echo "=== Skill Telemetry Summary ==="
+    echo "Total invocations: ${total_invoked}"
+    echo "Unique skills: ${unique_skills}"
+    echo "Completion rate: ${total_completed}/${total_invoked} ($(jq -n --argj c "$total_completed" --argj i "$total_invoked" 'if $i == 0 then "N/A" else (($c / $i) * 100 | round | tostring + "%") end'))"
+
+    echo ""
+    echo "Top skills:"
+    jq -s --argjson total_invoked "$total_invoked" \
+        '[.[] | select(.event == "invoked")] | group_by(.skill) | map({skill: .[0].skill, count: length}) | sort_by(-.count) | .[0:10] | .[] | "  \(.skill)\t\(.count)\t(\((.count / ($total_invoked) * 100) | round) %)"' \
+        <<< "$data" | jq -r .
+
+    echo ""
+    echo "Average duration:"
+    jq -s '[.[] | select(.event == "completed" and .duration_ms != null)] | group_by(.skill) | map({skill: .[0].skill, avg_ms: (map(.duration_ms) | add / length)}) | .[] | "  \(.skill): \((.avg_ms / 1000 | round))s"' <<< "$data" | jq -r .
+}
+
+case "$COMMAND" in
+    summary) cmd_summary ;;
+    help|--help|-h)
+        echo "Usage: summ-stats <command> [options]"
+        echo ""
+        echo "Commands:"
+        echo "  summary [--from DATE] [--to DATE]  Overall statistics"
+        echo "  session <session_id>               Workflow trace for a session"
+        echo "  paths [--from DATE] [--to DATE]    Common workflow path analysis"
+        echo "  recent [--n COUNT]                 Last N invocations (default 20)"
+        ;;
+    *)
+        echo "Unknown command: $COMMAND"
+        echo "Run 'summ-stats help' for usage."
+        exit 1
+        ;;
+esac
