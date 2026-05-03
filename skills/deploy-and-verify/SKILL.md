@@ -7,7 +7,7 @@ description: Use when deploying an application and verifying the deployment work
 
 Deploy the application and verify the deployment works.
 
-**Trigger:** User asks to deploy, deploy and verify, 上线, 验证. Or agent judges deployment is the natural next step after `finishing-a-development-branch`.
+**Trigger:** User asks to deploy, deploy and verify, 上线, 验证. Or agent judges deployment is the natural next step after implementation completes — subagent tasks done, plan execution done, simple task done, or branch finish.
 
 ## Workflow
 
@@ -78,7 +78,13 @@ If FAILED at deploy or verify stage:
 
 ## Integration
 
-**Works after:** `finishing-a-development-branch`
+**Triggered by (any of):**
+- **subagent-driven-development** — after all tasks complete and two-stage review passes
+- **executing-plans** — after all batches complete
+- **to-do-it** — after simple task completes (suggestion only, not automatic)
+- **finishing-a-development-branch** — after branch finish (optional, still valid)
+- **Manual** — user says "deploy", "上线", "验证"
+
 **Works before:** `value-proof` (optional)
 **Uses convention from:** `deploy` skill (DEPLOY.md)
 
