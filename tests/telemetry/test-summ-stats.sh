@@ -69,4 +69,47 @@ assert_summary_completion() {
 assert_summary_total
 assert_summary_unique
 assert_summary_completion
+
+# Test 4: session command shows workflow trace
+assert_session_trace() {
+    local output
+    output=$(bash "$SUMM_STATS" session sess0001 2>&1)
+    if echo "$output" | grep -q "summ:brainstorming" && echo "$output" | grep -q "summ:writing-plans"; then
+        echo "  [PASS] session shows brainstorming and writing-plans"
+    else
+        echo "  [FAIL] session trace incomplete"
+        echo "$output"
+        return 1
+    fi
+}
+
+# Test 5: recent command shows entries
+assert_recent() {
+    local output
+    output=$(bash "$SUMM_STATS" recent --n 5 2>&1)
+    if echo "$output" | grep -q "brainstorming" && echo "$output" | grep -q "writing-plans"; then
+        echo "  [PASS] recent shows skill entries"
+    else
+        echo "  [FAIL] recent output missing skills"
+        echo "$output"
+        return 1
+    fi
+}
+
+# Test 6: paths command shows workflow chains
+assert_paths() {
+    local output
+    output=$(bash "$SUMM_STATS" paths 2>&1)
+    if echo "$output" | grep -q "→"; then
+        echo "  [PASS] paths shows arrow-separated chains"
+    else
+        echo "  [FAIL] paths output missing chains"
+        echo "$output"
+        return 1
+    fi
+}
+
+assert_session_trace
+assert_recent
+assert_paths
 echo "Done."

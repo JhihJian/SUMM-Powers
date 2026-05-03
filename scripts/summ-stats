@@ -11,15 +11,17 @@ shift 2>/dev/null || true
 FROM_DATE=""
 TO_DATE=""
 
-# Parse flags
+# Parse flags (preserve non-flag positional args)
+POSITIONAL_ARGS=()
 while [ $# -gt 0 ]; do
     case "$1" in
         --from) FROM_DATE="$2"; shift 2 ;;
         --to) TO_DATE="$2"; shift 2 ;;
         --n) N_COUNT="$2"; shift 2 ;;
-        *) shift ;;
+        *) POSITIONAL_ARGS+=("$1"); shift ;;
     esac
 done
+set -- "${POSITIONAL_ARGS[@]}"
 
 collect_log_files() {
     local from="${FROM_DATE:-}"
@@ -75,8 +77,95 @@ cmd_summary() {
     jq -s '[.[] | select(.event == "completed" and .duration_ms != null)] | group_by(.skill) | map({skill: .[0].skill, avg_ms: (map(.duration_ms) | add / length)}) | .[] | "  \(.skill): \((.avg_ms / 1000 | round))s"' <<< "$data" | jq -r .
 }
 
+cmd_session() {
+    local sid="${1:-}"
+    if [ -z "$sid" ]; then
+        echo "Usage: summ-stats session <session_id>"
+        exit 1
+    fi
+
+    local data
+    data=$(collect_log_files)
+
+    if [ -z "$data" ]; then
+        echo "No telemetry data found."
+        exit 0
+    fi
+
+    local session_data
+    session_data=$(jq -s --arg sid "$sid" '[.[] | select(.session_id == $sid)]' <<< "$data")
+
+    local count
+    count=$(jq 'length' <<< "$session_data")
+
+    if [ "$count" -eq 0 ]; then
+        echo "No data for session: $sid"
+        exit 0
+    fi
+
+    local started
+    started=$(jq -r '[.[].ts] | sort | first' <<< "$session_data")
+    local ended
+    ended=$(jq -r '[.[].ts] | sort | last' <<< "$session_data")
+
+    echo "=== Session: $sid ==="
+    echo "Started: $started"
+    echo "Last activity: $ended"
+    echo "Events: $count"
+    echo ""
+    echo "Workflow trace:"
+    jq -r 'sort_by(.ts) | .[] | "  \(.ts[11:19]) \(.skill) (\(.event)\(if .duration_ms then ", \((.duration_ms / 1000 | round))s" else "" end))"' <<< "$session_data"
+}
+
+cmd_recent() {
+    local n="${N_COUNT:-20}"
+    local data
+    data=$(collect_log_files)
+
+    if [ -z "$data" ]; then
+        echo "No telemetry data found."
+        exit 0
+    fi
+
+    echo "=== Recent ${n} invocations ==="
+    jq -s --argjson n "$n" '
+        sort_by(.ts) | reverse | .[0:$n] | .[] |
+        "\(.ts) [\(.session_id[0:8])] \(.event) \(.skill)\(if .duration_ms then " (\((.duration_ms / 1000 | round))s)" else "" end)"
+    ' <<< "$data" | head -"$n"
+}
+
+cmd_paths() {
+    local data
+    data=$(collect_log_files)
+
+    if [ -z "$data" ]; then
+        echo "No telemetry data found."
+        exit 0
+    fi
+
+    echo "=== Workflow Paths (top 10) ==="
+    jq -s '
+        group_by(.session_id)
+        | map(
+            map(select(.event == "invoked") | .skill)
+            | reduce .[] as $item ([]; if length == 0 or .[-1] != $item then . + [$item] else . end)
+            | join(" → ")
+            | select(length > 0)
+        )
+        | group_by(.)
+        | map({path: .[0], count: length})
+        | sort_by(-.count)
+        | .[0:10]
+        | .[]
+        | "  \(.path)  (\(.count)x)"
+    ' <<< "$data"
+}
+
 case "$COMMAND" in
     summary) cmd_summary ;;
+    session) cmd_session "$@" ;;
+    recent) cmd_recent ;;
+    paths) cmd_paths ;;
     help|--help|-h)
         echo "Usage: summ-stats <command> [options]"
         echo ""
