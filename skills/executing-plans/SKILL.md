@@ -1,6 +1,6 @@
 ---
 name: executing-plans
-description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
+description: Internal fallback for plan execution when subagents are unavailable — invoked automatically by writing-plans, not intended for direct user selection
 ---
 
 # Executing Plans
@@ -13,7 +13,7 @@ Load plan, review critically, execute tasks in batches, report for review betwee
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
-**Note:** Tell your human partner that Superpowers works much better with access to subagents. The quality of its work will be significantly higher if run on a platform with subagent support (such as Claude Code or Codex). If subagents are available, use summ:subagent-driven-development instead of this skill.
+**Note:** This skill is invoked automatically by the execution router in writing-plans when subagents are unavailable. It is not intended for direct user selection.
 
 **Context Isolation Principle:** When dispatching subagents, provide only the context they need. No access to session history or other conversations context.
 
