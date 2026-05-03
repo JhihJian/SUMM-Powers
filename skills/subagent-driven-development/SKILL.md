@@ -45,6 +45,8 @@ digraph process {
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent for entire implementation" [shape=box];
+    "Project has deployable target (DEPLOY.md, docker-compose, HTTP service)?" [shape=diamond];
+    "Use summ:deploy-and-verify" [shape=box style=filled fillcolor=lightyellow];
     "Use summ:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (./implementer-prompt.md)";
@@ -64,7 +66,10 @@ digraph process {
     "Mark task complete in TodoWrite" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent for entire implementation" [label="no"];
-    "Dispatch final code reviewer subagent for entire implementation" -> "Use summ:finishing-a-development-branch";
+    "Dispatch final code reviewer subagent for entire implementation" -> "Project has deployable target (DEPLOY.md, docker-compose, HTTP service)?";
+    "Project has deployable target (DEPLOY.md, docker-compose, HTTP service)?" -> "Use summ:deploy-and-verify" [label="yes"];
+    "Project has deployable target (DEPLOY.md, docker-compose, HTTP service)?" -> "Use summ:finishing-a-development-branch" [label="no"];
+    "Use summ:deploy-and-verify" -> "Use summ:finishing-a-development-branch";
 }
 ```
 
@@ -247,6 +252,7 @@ Done!
 - **summ:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
 - **summ:writing-plans** - Creates the plan this skill executes
 - **summ:requesting-code-review** - Code review template for reviewer subagents
+- **summ:deploy-and-verify** - Deploy and verify after all tasks complete (if project has deployable target)
 - **summ:finishing-a-development-branch** - Complete development after all tasks
 
 **Subagents should use:**
