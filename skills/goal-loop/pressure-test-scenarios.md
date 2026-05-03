@@ -282,33 +282,28 @@ These scenarios test the goal-loop skill's behavior across various edge cases an
 
 ---
 
-## Scenario 10: Conflict with active dev-loop plan
+## Scenario 10: Conflict with active implementation plan
 
-**Situation**: User runs goal-loop while an active dev-loop plan exists in the workspace. The system detects the conflict and warns the user.
+**Situation**: User runs goal-loop while an active implementation plan exists in the workspace. The system detects the conflict and warns the user.
 
 **Expected behavior**:
 1. Parse user goal: "Improve API performance"
-2. Check for active dev-loop plan:
-   - Look for `.claude/dev-loop/plan.md` or similar state file
-   - Found active plan with status "IN_PROGRESS"
-3. Detect conflict: dev-loop and goal-loop both manage iterative development
+2. Check for active implementation plan:
+   - Look for plan files in `docs/superpowers/plans/`
+   - Found active plan
+3. Detect conflict: implementation plan and goal-loop both manage iterative development
 4. Warn user with clear message:
-   - "Active dev-loop plan detected in workspace"
+   - "Active implementation plan detected in workspace"
    - "Running goal-loop simultaneously may cause conflicts"
-   - "Options: (a) Stop dev-loop and proceed, (b) Cancel goal-loop"
-5. Present user choice (if interactive) or stop and require explicit flag:
-   - If --ignore-dev-loop flag provided, proceed
-   - Else, stop with error code and guidance
+   - "Options: (a) Proceed with goal-loop, (b) Cancel goal-loop"
+5. Present user choice (if interactive) or stop and require explicit confirmation
 6. If user chooses to proceed:
-   - Update state: dev_loop_conflict="acknowledged"
    - Continue with goal-loop execution
 7. If user cancels:
-   - Update state: status="CANCELLED", cancel_reason="dev_loop_conflict"
+   - Update state: status="CANCELLED"
    - Exit gracefully
 
 **Verify** in state file:
-- `dev_loop_conflict` should be set to "acknowledged" (if proceeded) or "detected" (if stopped)
 - `status` should reflect user's choice ("IN_PROGRESS" or "CANCELLED")
-- `cancel_reason` should be "dev_loop_conflict" if cancelled
 - The system should demonstrate conflict detection and user guidance
 - The workflow should prevent conflicting iterative systems from running simultaneously

@@ -50,7 +50,7 @@ Test helpers in `tests/claude-code/test-helpers.sh` provide `run_claude`, `asser
 Skills are discovered at session start via the `using-summ` skill injected by the SessionStart hook. The hook reads `skills/using-summ/SKILL.md` and injects it as context. All other skills are loaded on-demand via the `Skill` tool.
 
 ### Workflow Pipeline
-The core development workflow flows through skills in order: `brainstorming` → `using-git-worktrees` → `writing-plans` → `executing-plans`/`subagent-driven-development` → `requesting-code-review` → `finishing-a-development-branch`. `test-driven-development` applies during implementation; `systematic-debugging` applies during debugging.
+The core development workflow flows through skills in order: `brainstorming` → `using-git-worktrees` → `writing-plans` → `executing-plans`/`subagent-driven-development` → `requesting-code-review` → `finishing-a-development-branch` → `deploy-and-verify` (optional) → `value-proof` (optional). `test-driven-development` applies during implementation; `systematic-debugging` applies during debugging.
 
 ### Subagent-Driven Development
 The `subagent-driven-development` skill dispatches fresh subagents per task with two-stage review: spec compliance first, then code quality. Reviewer prompts live alongside the skill in `spec-reviewer-prompt.md` and `code-quality-reviewer-prompt.md`.

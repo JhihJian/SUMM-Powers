@@ -1,6 +1,6 @@
 ---
 name: goal-loop
-description: Use when pursuing an improvement goal through iterative refinement — each iteration picks one highest-value improvement, executes it, and self-evaluates. For goals like "improve code quality", "fix all lint warnings", "raise test coverage to 80%". Not for full delivery pipelines (use summ:dev-loop) or one-shot tasks (use summ:to-do-it).
+description: Use when pursuing an improvement goal through iterative refinement — each iteration picks one highest-value improvement, executes it, and self-evaluates. For goals like "improve code quality", "fix all lint warnings", "raise test coverage to 80%". Not for full delivery pipelines (use the brainstorming → writing-plans → subagent-driven-development pipeline) or one-shot tasks (use summ:to-do-it).
 ---
 
 # Goal Loop: Iterative Goal-Driven Improvement
@@ -11,7 +11,7 @@ Goal Loop is a goal-driven continuous improvement skill. You receive a high-leve
 
 **Core principle: one improvement per iteration.** Never batch changes. This prevents scope creep and keeps every commit atomic and reviewable.
 
-**Positioning:** Between `summ:dev-loop` (full delivery pipeline) and `summ:to-do-it` (one-shot tasks). Use goal-loop when you have a clear goal but no need for the full spec-to-delivery workflow.
+**Positioning:** Between the full delivery pipeline (`brainstorming` → `writing-plans` → `subagent-driven-development`) and `summ:to-do-it` (one-shot tasks). Use goal-loop when you have a clear goal but no need for the full spec-to-delivery workflow.
 
 ## When to Use
 
@@ -24,7 +24,7 @@ Goal Loop is a goal-driven continuous improvement skill. You receive a high-leve
 - Any goal requiring multiple small improvements in a single session
 
 **NOT for:**
-- Building a new feature from scratch → use `summ:dev-loop`
+- Building a new feature from scratch → use the brainstorming → writing-plans → subagent-driven-development pipeline
 - A single small task with known solution → use `summ:to-do-it`
 - Debugging a specific issue → use `summ:systematic-debugging`
 - Brainstorming a design → use `summ:brainstorming`
@@ -42,7 +42,7 @@ Goal Loop is a goal-driven continuous improvement skill. You receive a high-leve
 
 **Silent by default.** Do not announce these checks to the user. Only speak up if a conflict is found.
 
-1. **Check for active dev-loop plans** — scan `docs/superpowers/plans/` for plan files. If none found, proceed silently. If found, warn the user and ask whether to proceed or cancel.
+1. **Check for active implementation plans** — scan `docs/superpowers/plans/` for plan files. If none found, proceed silently. If found, warn the user and ask whether to proceed or cancel.
 
 2. **Check for existing goal-loop state** — check `.claude/goal-loop-state.md`. If absent or status is `COMPLETED`/`ABORTED`, proceed silently with a fresh state file. If status is `ACTIVE`, ask the user whether to resume or restart.
 
@@ -53,7 +53,7 @@ No output, no logging, no "checking..." messages unless a conflict is detected.
 ```
 ┌─────────────────────────────────────────────────────┐
 │                  PRE-FLIGHT CHECK                   │
-│         (dev-loop conflict? existing state?)        │
+│         (active plan conflict? existing state?)        │
 └─────────────────────┬───────────────────────────────┘
                       │
                       v
