@@ -16,7 +16,7 @@ Find and fix architectural friction — "small changes require touching many fil
 
 ## Prerequisites
 
-- Read `CONTEXT.md` if present (domain terminology)
+- Read `CONTEXT.md` if present (domain terminology). If not present, invoke `domain-language` skill to create an initial CONTEXT.md before proceeding.
 - Review `language.md` for depth, leverage, locality, seam definitions
 
 ## Workflow

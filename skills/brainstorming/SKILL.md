@@ -22,7 +22,9 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits
-2. **Domain language check** — if `CONTEXT.md` exists at project root, read it and activate domain-aware mode (see Domain-Aware Mode below)
+2. **Domain language check** — check if `CONTEXT.md` exists at project root:
+   - **Exists:** Read it and activate domain-aware mode
+   - **Not found:** Invoke `domain-language` skill to create an initial CONTEXT.md based on the project's domain-specific terminology, then activate domain-aware mode. If domain-language determines no domain-specific terminology exists (skip condition), continue without one.
 3. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 4. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
 5. **Propose 2-3 approaches** — with trade-offs and your recommendation
@@ -39,6 +41,8 @@ digraph brainstorming {
     "Explore project context" [shape=box];
     "CONTEXT.md exists?" [shape=diamond];
     "Read CONTEXT.md\n(activate domain-aware mode)" [shape=box];
+    "Invoke domain-language\n(create initial CONTEXT.md)" [shape=box];
+    "CONTEXT.md created?" [shape=diamond];
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
     "Ask clarifying questions" [shape=box];
@@ -52,7 +56,10 @@ digraph brainstorming {
 
     "Explore project context" -> "CONTEXT.md exists?";
     "CONTEXT.md exists?" -> "Read CONTEXT.md\n(activate domain-aware mode)" [label="yes"];
-    "CONTEXT.md exists?" -> "Visual questions ahead?" [label="no"];
+    "CONTEXT.md exists?" -> "Invoke domain-language\n(create initial CONTEXT.md)" [label="no"];
+    "Invoke domain-language\n(create initial CONTEXT.md)" -> "CONTEXT.md created?";
+    "CONTEXT.md created?" -> "Read CONTEXT.md\n(activate domain-aware mode)" [label="yes"];
+    "CONTEXT.md created?" -> "Visual questions ahead?" [label="no"];
     "Read CONTEXT.md\n(activate domain-aware mode)" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
     "Visual questions ahead?" -> "Ask clarifying questions" [label="no"];
@@ -83,9 +90,9 @@ digraph brainstorming {
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
 - Focus on understanding: purpose, constraints, success criteria
 
-**Domain-aware mode (when CONTEXT.md exists):**
+**Domain-aware mode (when CONTEXT.md exists or was just created):**
 
-When the project has a CONTEXT.md, activate these behaviors throughout the session:
+When the project has a CONTEXT.md (pre-existing or created in step 2), activate these behaviors throughout the session:
 
 - **Inline updates:** When a term is clarified or confirmed, update CONTEXT.md immediately — don't batch updates for later
 - **Challenge conflicts:** If the user uses a term differently from CONTEXT.md's definition, point it out: "CONTEXT.md defines [term] as [X], but you're using it as [Y]. Should we update the definition?"
