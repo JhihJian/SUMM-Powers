@@ -30,6 +30,59 @@ escape_for_json() {
     printf '%s' "$s"
 }
 
+init_telemetry() {
+    local telem_dir="${HOME}/.claude/skill-telemetry"
+    local log_dir="${telem_dir}/logs"
+
+    # Create directories
+    mkdir -p "$log_dir"
+
+    # Write default config if missing
+    if [ ! -f "${telem_dir}/config.json" ]; then
+        cat > "${telem_dir}/config.json" << 'TELEMCFG'
+{"enabled":true,"retention_days":90,"log_dir":"~/.claude/skill-telemetry/logs"}
+TELEMCFG
+    fi
+
+    # Check if telemetry is enabled
+    local enabled
+    enabled=$(jq -r '.enabled // true' "${telem_dir}/config.json" 2>/dev/null || echo "true")
+    if [ "$enabled" != "true" ]; then
+        return 0
+    fi
+
+    # Generate session ID (8-char hex)
+    local session_id
+    session_id=$(od -An -tx1 -N4 /dev/urandom | tr -d ' \n')
+
+    # Write current session file
+    printf '%s' "$session_id" > "${telem_dir}/.current-session"
+
+    # Update sessions index
+    local index_file="${telem_dir}/sessions-index.json"
+    local now_ts
+    now_ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+    if [ ! -f "$index_file" ]; then
+        printf '{"sessions":{}}' > "$index_file"
+    fi
+
+    local today
+    today=$(date -u +"%Y-%m-%d")
+
+    # Use temp file for atomic update
+    local tmp_index
+    tmp_index=$(mktemp)
+    jq --arg sid "$session_id" \
+       --arg ts "$now_ts" \
+       --arg file "${today}.jsonl" \
+       '.sessions[$sid] = {"started": $ts, "last_activity": $ts, "skills_invoked": 0, "files": [$file]}' \
+       "$index_file" > "$tmp_index" && mv "$tmp_index" "$index_file"
+}
+
+# Initialize telemetry (after PLUGIN_ROOT is set)
+init_telemetry
+
 using_summ_escaped=$(escape_for_json "$using_summ_content")
 warning_escaped=$(escape_for_json "$warning_message")
 session_context="<EXTREMELY_IMPORTANT>\nYou have SUMM.\n\n**Below is the full content of your 'summ:using-summ' skill - your introduction to using skills. For all other skills, use the 'Skill' tool:**\n\n${using_summ_escaped}\n\n${warning_escaped}\n</EXTREMELY_IMPORTANT>"
