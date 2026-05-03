@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test: Health Check Skill structural verification
+# Test: Health Skill structural verification
 # Verifies SKILL.md has valid frontmatter, all 9 check sections, mode instructions, and report format
 set -euo pipefail
 
@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/test-helpers.sh"
 
 SKILLS_DIR="$(cd "$SCRIPT_DIR/../../skills" && pwd)"
-SKILL_FILE="$SKILLS_DIR/health-check/SKILL.md"
+SKILL_FILE="$SKILLS_DIR/health/SKILL.md"
 
 echo "=== Test: Health Check Skill ==="
 echo ""
@@ -28,17 +28,17 @@ fi
 echo "  [PASS] SKILL.md exists"
 
 # Test 2: Valid YAML frontmatter with name
-echo "Test 2: frontmatter has 'name: health-check'..."
+echo "Test 2: frontmatter has 'name: health'..."
 name_line=$(head -5 "$SKILL_FILE" | grep "^name:" || true)
 if [ -z "$name_line" ]; then
     echo "  [FAIL] Missing 'name:' in frontmatter"
     exit 1
 fi
-if ! echo "$name_line" | grep -q "health-check"; then
-    echo "  [FAIL] name is not 'health-check'"
+if ! echo "$name_line" | grep -q "health"; then
+    echo "  [FAIL] name is not 'health'"
     exit 1
 fi
-echo "  [PASS] frontmatter name is health-check"
+echo "  [PASS] frontmatter name is health"
 
 # Test 3: frontmatter has description
 echo "Test 3: frontmatter has description..."

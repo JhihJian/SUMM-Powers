@@ -1,5 +1,5 @@
 ---
-name: health-check
+name: health
 description: Perform comprehensive project health checks with fast (read-only) and full (build/test/dependency) modes, generating detailed Markdown reports with actionable suggestions
 ---
 
