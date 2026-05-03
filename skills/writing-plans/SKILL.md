@@ -264,20 +264,16 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
+After saving the plan, automatically start execution:
 
-**"Plan complete and saved to `docs/superpowers/plans/<filename>.md`. Two execution options:**
+**Announce:**
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+"Plan complete and saved to `docs/superpowers/plans/<filename>.md`.
 
-**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
+Starting Subagent-Driven execution — N tasks, fresh subagent per task with two-stage review."
 
-**Which approach?"**
+**Then immediately invoke:** summ:subagent-driven-development
 
-**If Subagent-Driven chosen:**
-- **REQUIRED SUB-SKILL:** Use summ:subagent-driven-development
-- Fresh subagent per task + two-stage review
+**Fallback:** If subagents are not available on this platform, use summ:executing-plans instead and announce "Starting batch execution — N tasks, direct execution with checkpoints."
 
-**If Inline Execution chosen:**
-- **REQUIRED SUB-SKILL:** Use summ:executing-plans
-- Batch execution with checkpoints for review
+**Do not ask the user to choose.** Default to Subagent-Driven. The executing-plans skill is an internal fallback, not a user-facing option.
