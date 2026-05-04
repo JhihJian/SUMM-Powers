@@ -199,21 +199,15 @@ Positioned after `value-proof`. Rationale: retro reflects on the work process af
 
 ### Trigger Mechanism
 
-**Manual trigger:**
+Manual only. No auto-trigger, no modification to other skills.
+
 ```
 /retro                    — analyze latest complete work cycle
 /retro --since <ref>      — analyze specific commit range
 /retro --full             — include goal-loop history analysis
 ```
 
-**Auto-trigger (optional):**
-After `finishing-a-development-branch` or `value-proof` completes, prompt:
-
-```
-本轮工作已完成。是否运行 retro 回顾？(y/n)
-```
-
-User opts in. Never auto-runs — retrospectives need willing participation.
+Zero invasion: retro is a standalone skill that only reads existing files and git history.
 
 ### Dependencies
 
