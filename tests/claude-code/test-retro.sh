@@ -94,7 +94,7 @@ echo "--- Layer 3: Workflow steps ---"
 echo ""
 
 workflow_steps=(
-    "Data Collection\|数据采集\|Phase 1"
+    "Data Collection\|Collect Data\|数据采集\|Phase 1"
     "Analysis\|分析引擎\|Phase 2"
     "Pattern Recognition\|模式识别\|Pattern"
     "Report\|报告"
