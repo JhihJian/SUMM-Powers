@@ -1,0 +1,148 @@
+# Agent Orchestrator 配置 — SUMM-Powers 项目
+# 文档: https://github.com/ComposioHQ/agent-orchestrator
+
+defaults:
+  runtime: tmux
+  workspace: worktree
+  notifiers: [desktop]
+
+projects:
+  summ-powers:
+    name: SUMM-Powers
+    repo: JhihJian/SUMM-Powers
+    path: /data/dev/SUMM/SUMM-Powers
+    defaultBranch: main
+
+    # GitHub Issues 跟踪
+    tracker:
+      plugin: github
+
+    # Orchestrator — 接收指令、拆解任务、派工、监控
+    orchestrator:
+      agent: codex
+      agentConfig:
+        permissions: auto-edit
+
+    # Worker — 执行编码、测试、PR
+    worker:
+      agent: codex
+      agentConfig:
+        permissions: auto-edit
+
+    # Worker 工作规范
+    agentRulesFile: .agent-rules.md
+
+    # Orchestrator 管理方法论
+    orchestratorRules: |
+      ## 项目背景
+      SUMM-Powers 是一个 skills 框架项目，fork 自 obra/superpowers。
+      核心产物是 Markdown skill 文件（skills/<name>/SKILL.md），附带 Node.js brainstorm server 和 bash 测试。
+
+      ## 任务拆解规则
+
+      ### 第一步：理解需求
+      - 确认需求范围和验收标准
+      - 如果需求模糊，用 ao send 向提问者确认
+
+      ### 第二步：拆解任务
+      - 将需求拆成可独立开发、独立测试的子任务
+      - 每个子任务对应一个 worker session
+      - 标注任务间的依赖关系：
+        - 无依赖 → 用 ao batch-spawn 并行派发
+        - 有依赖 → 等前置任务完成后再 spawn
+      - 每个子任务写清楚：目标、涉及的文件范围、验收条件
+
+      ### 第三步：派工
+      - 使用 ao spawn --prompt "详细子任务描述" 派发
+      - 多个独立任务用 ao batch-spawn
+      - 也可以用 issue ID 派发：ao spawn ISSUE-42
+
+      ### 第四步：监控与干预
+      - 定期用 ao status 检查进度
+      - worker 卡住超过 10 分钟用 ao send 给提示
+      - worker 报错无法恢复时 ao session kill 后重新 spawn
+      - CI 失败和 review 修改由 reactions 自动处理，无需手动干预
+
+      ### 第五步：验收与反思
+      - 所有 worker 完成后，检查 PR 是否通过 CI
+      - 合并后触发反思流程（见 reactions.all-complete）
+
+      ### 拆解原则
+      - 每个子任务改动不超过 5 个文件
+      - 每个子任务可独立 review
+      - 有冲突风险的改动串行执行
+      - 纯新增功能并行执行
+
+      ## 干预优先级
+      1. 紧急：worker 进程崩溃 → 立即 kill + respawn
+      2. 重要：CI 反复失败（>2次） → attach 查看终端，补充上下文后 respawn
+      3. 常规：review 反复修改 → ao send 给更具体的修改指导
+      4. 低优：worker idle 较久 → 检查是否卡在权限等待，ao send 确认
+
+    # Session 复用策略
+    orchestratorSessionStrategy: reuse
+
+    # 事件响应配置
+    reactions:
+      # CI 失败 → 自动让 worker 修复
+      ci-failed:
+        auto: true
+        action: send-to-agent
+        message: "CI 失败了。运行 ./tests/claude-code/run-skill-tests.sh 查看具体失败，修复后重新推送。"
+        retries: 2
+        escalateAfter: "15m"
+
+      # Review 要求修改 → 自动转发给 worker
+      changes-requested:
+        auto: true
+        action: send-to-agent
+        message: "请根据 review 意见修改代码。逐条回复每条评论，推送修复后回复评论确认。"
+
+      # 自动化 review 评论（bugbot）→ 转发给 worker
+      bugbot-comments:
+        auto: true
+        action: send-to-agent
+
+      # Review 通过 + CI 绿 → 自动合并
+      approved-and-green:
+        auto: true
+        action: auto-merge
+
+      # 合并冲突 → 让 worker 解决
+      merge-conflicts:
+        auto: true
+        action: send-to-agent
+        message: "检测到合并冲突，请 rebase 并解决冲突后重新推送。"
+
+      # Agent 卡住 → 通知人类
+      agent-stuck:
+        auto: true
+        action: notify
+        priority: urgent
+        threshold: "10m"
+
+      # Agent 需要人工输入 → 通知人类
+      agent-needs-input:
+        auto: true
+        action: notify
+        priority: action
+
+      # 所有任务完成 → 让 orchestrator 反思
+      all-complete:
+        auto: true
+        action: send-to-agent
+        message: |
+          所有 worker 任务已完成。请进行流程反思：
+
+          1. 统计本轮：完成了几个 PR，CI 失败几次，review 修改几轮
+          2. 分析效率瓶颈：哪个任务耗时最长？为什么？
+          3. 检查 reactions 配置是否合理：
+             - 重试次数是否需要调整？
+             - 阈值（escalateAfter、threshold）是否合适？
+             - 是否需要新增 reaction？
+          4. 将反思结果写入 WORKFLOW-REFLECTION.md，格式：
+             - 日期
+             - 任务摘要
+             - 数据统计
+             - 改进建议（具体的 YAML 配置变更）
+          5. 如果改进建议明确且低风险，直接修改 agent-orchestrator.yaml

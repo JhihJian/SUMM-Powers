@@ -13,8 +13,8 @@ This skill performs comprehensive health checks on your project and generates a 
 
 | Mode | Description | Checks | Duration |
 |------|-------------|--------|----------|
-| **Fast** | Default mode; read-only checks only | 1-5 (Commit, Branch, Code-Doc, Doc, Skill) | < 1 minute |
-| **Full** | Includes build, test, and dependency checks | All 9 checks | 2-10 minutes |
+| **Fast** | Default mode; read-only checks only | 1-8 (Commit, Branch, Code-Doc, Doc, Skill, Code Size, Recent Changes, Test Matrix) | < 1 minute |
+| **Full** | Includes build, test, and coverage checks | All 12 checks | 2-10 minutes |
 
 **Usage:**
 - Fast mode (default): Just run the skill normally
@@ -194,11 +194,14 @@ fi
 # Find all SKILL.md files
 find skills/ -name "SKILL.md" 2>/dev/null
 
-# Validate frontmatter for each SKILL.md
+# Validate frontmatter for each SKILL.md (only within frontmatter delimiters)
 for skill in skills/*/SKILL.md; do
   if [ -f "$skill" ]; then
     echo "Checking $skill:"
-    grep -E "^name:|^description:" "$skill" || echo "  ✗ Missing frontmatter"
+    # Extract frontmatter only (between first two --- lines)
+    frontmatter=$(sed -n '2,/^---$/p' "$skill" | head -20)
+    echo "$frontmatter" | grep -q "^name:" && echo "  ✓ name" || echo "  ✗ Missing name"
+    echo "$frontmatter" | grep -q "^description:" && echo "  ✓ description" || echo "  ✗ Missing description"
     # Check for required sections
     grep -q "## Overview" "$skill" && echo "  ✓ Overview section" || echo "  ✗ Missing Overview"
   fi
@@ -222,7 +225,298 @@ done
 
 ---
 
-### 6. 构建验证 (Build Verification) — FULL
+### 6. 代码规模 (Code Size) — FAST
+
+**Purpose:** Measure total lines of code and breakdown by language
+
+**Check Instructions:**
+```bash
+# Count total lines of code by file type
+# Adapt extensions based on detected project type
+if [ -f "package.json" ]; then
+  echo "=== TypeScript/JavaScript ==="
+  find src/ -name "*.ts" -o -name "*.js" -o -name "*.tsx" -o -name "*.jsx" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1
+  echo "=== Styles (CSS/SCSS) ==="
+  find src/ -name "*.css" -o -name "*.scss" -o -name "*.less" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1
+elif [ -f "Cargo.toml" ]; then
+  echo "=== Rust ==="
+  find src/ -name "*.rs" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1
+elif [ -f "go.mod" ]; then
+  echo "=== Go ==="
+  find . -name "*.go" -not -path "./vendor/*" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1
+elif [ -f "pyproject.toml" ] || [ -f "requirements.txt" ]; then
+  echo "=== Python ==="
+  find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*" 2>/dev/null | xargs wc -l 2>/dev/null | tail -1
+fi
+
+# Generic fallback — count all common source files
+echo "=== All source files ==="
+find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.tsx" -o -name "*.jsx" -o -name "*.rs" -o -name "*.go" -o -name "*.py" -o -name "*.java" -o -name "*.rb" \) \
+  -not -path "./node_modules/*" -not -path "./vendor/*" -not -path "./.venv/*" -not -path "./venv/*" -not -path "./target/*" -not -path "./.git/*" \
+  2>/dev/null | xargs wc -l 2>/dev/null | tail -1
+
+# Count total files
+find . -type f \( -name "*.ts" -o -name "*.js" -o -name "*.tsx" -o -name "*.jsx" -o -name "*.rs" -o -name "*.go" -o -name "*.py" -o -name "*.java" -o -name "*.rb" \) \
+  -not -path "./node_modules/*" -not -path "./vendor/*" -not -path "./.venv/*" -not -path "./venv/*" -not -path "./target/*" -not -path "./.git/*" \
+  2>/dev/null | wc -l
+
+# Count total lines (including config, markdown, etc.)
+echo "=== Total lines (all text files) ==="
+git ls-files 2>/dev/null | xargs wc -l 2>/dev/null | tail -1
+```
+
+**PASS Criteria:**
+- Source files detected and countable
+- Total lines reported successfully
+
+**WARN Criteria:**
+- Very large codebase (> 100,000 LOC) — consider splitting
+- No clear language breakdown possible
+
+**FAIL Criteria:**
+- No source files found
+- Unable to count lines
+
+**SKIP Criteria:**
+- Empty repository
+
+---
+
+### 7. 近期变更统计 (Recent Changes) — FAST
+
+**Purpose:** Analyze lines added/deleted in recent commits to gauge development activity
+
+**Check Instructions:**
+```bash
+# Lines changed in last 7 days (total summary)
+git log --since="7 days ago" --oneline --stat | grep -E "file changed|files changed" | awk '{ins+=$4; del+=$6} END {printf "Last 7 days: +%d -%d (net %d)\n", ins, del, ins-del}'
+
+# Per-commit breakdown for recent commits (last 10)
+git log --since="7 days ago" --oneline --shortstat | head -30
+
+# Lines changed in last 30 days (total summary)
+git log --since="30 days ago" --oneline --stat | grep -E "file changed|files changed" | awk '{ins+=$4; del+=$6} END {printf "Last 30 days: +%d -%d (net %d)\n", ins, del, ins-del}'
+
+# Commit frequency
+echo "Commits in last 7 days: $(git log --since='7 days ago' --oneline | wc -l)"
+echo "Commits in last 30 days: $(git log --since='30 days ago' --oneline | wc -l)"
+
+# Top changed files in last 7 days
+git diff --stat HEAD~10..HEAD 2>/dev/null | tail -1
+git log --since="7 days ago" --pretty=format: --name-only | sort | uniq -c | sort -rn | head -10
+```
+
+**PASS Criteria:**
+- Recent commits with meaningful changes detected (7-day activity)
+- Net lines of change reported successfully
+
+**WARN Criteria:**
+- No commits in last 7 days but activity within 30 days
+- Very high churn (> 5,000 lines changed in 7 days) may indicate instability
+
+**FAIL Criteria:**
+- No commits in last 30 days
+- Unable to compute change statistics
+
+**SKIP Criteria:**
+- Not a git repository
+- Fewer than 2 commits in history
+
+---
+
+### 8. 测试覆盖矩阵 (Test Coverage Matrix) — FAST / FULL
+
+**Purpose:** Map source modules to their test coverage across unit, integration, and E2E levels. FAST mode uses file-naming conventions; FULL mode runs coverage tools for precise line-level data.
+
+#### FAST Mode — File Mapping
+
+Scans source directories and checks for corresponding test files using naming conventions. No dependencies required.
+
+**Check Instructions:**
+```bash
+# ---- Node.js / TypeScript ----
+if [ -f "package.json" ]; then
+  echo "=== Unit Tests ==="
+  find src/ -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \) \
+    -not -name "*.test.*" -not -name "*.spec.*" -not -name "*.d.ts" 2>/dev/null | while read f; do
+    base=$(basename "$f" | sed 's/\.[^.]*$//')
+    dir=$(dirname "$f")
+    # Check common test file locations
+    unit=$(find . -type f \( -path "*/tests/*" -o -path "*/test/*" -o -path "*/__tests__/*" \) \
+      -name "${base}.test.*" -o -name "${base}.spec.*" 2>/dev/null | head -1)
+    if [ -n "$unit" ]; then
+      echo "  ✅ $f → $unit"
+    else
+      echo "  ❌ $f (no unit test)"
+    fi
+  done
+
+  echo "=== Integration Tests ==="
+  find . -path "*/tests/integration/*" -o -path "*/test/integration/*" \
+    -type f \( -name "*.test.*" -o -name "*.spec.*" \) 2>/dev/null | while read f; do
+    echo "  ✅ $f"
+  done
+
+  echo "=== E2E Tests ==="
+  find . -path "*/tests/e2e/*" -o -path "*/test/e2e/*" -o -path "*/e2e/*" \
+    -type f \( -name "*.test.*" -o -name "*.spec.*" \) 2>/dev/null | while read f; do
+    echo "  ✅ $f"
+  done
+fi
+
+# ---- Python ----
+if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ]; then
+  echo "=== Unit Tests ==="
+  find . -name "*.py" -not -path "./venv/*" -not -path "./.venv/*" \
+    -not -name "test_*" -not -name "*_test.py" -not -path "*/tests/*" 2>/dev/null | while read f; do
+    base=$(basename "$f" .py)
+    dir=$(dirname "$f")
+    unit=$(find . -path "*/tests/*" \( -name "test_${base}.py" -o -name "${base}_test.py" \) 2>/dev/null | head -1)
+    if [ -n "$unit" ]; then
+      echo "  ✅ $f → $unit"
+    else
+      echo "  ❌ $f (no unit test)"
+    fi
+  done
+
+  echo "=== Integration Tests ==="
+  find . -path "*/tests/integration/*" -name "*.py" 2>/dev/null | while read f; do
+    echo "  ✅ $f"
+  done
+
+  echo "=== E2E Tests ==="
+  find . -path "*/tests/e2e/*" -o -path "*/tests/end_to_end/*" \
+    -name "*.py" 2>/dev/null | while read f; do
+    echo "  ✅ $f"
+  done
+fi
+
+# ---- Go ----
+if [ -f "go.mod" ]; then
+  echo "=== Unit Tests ==="
+  find . -name "*.go" -not -path "./vendor/*" -not -name "*_test.go" 2>/dev/null | while read f; do
+    dir=$(dirname "$f")
+    base=$(basename "$f" .go)
+    testfile="${dir}/${base}_test.go"
+    if [ -f "$testfile" ]; then
+      echo "  ✅ $f → $testfile"
+    else
+      # Check for package-level test file
+      pkgtst=$(find "$dir" -maxdepth 1 -name "*_test.go" 2>/dev/null | head -1)
+      if [ -n "$pkgtst" ]; then
+        echo "  ⚠️  $f → $pkgtst (package-level, not file-specific)"
+      else
+        echo "  ❌ $f (no test)"
+      fi
+    fi
+  done
+
+  echo "=== Integration Tests ==="
+  find . -name "*_test.go" -not -path "./vendor/*" \
+    -exec grep -l "// +build integration\|//go:build integration" {} \; 2>/dev/null | while read f; do
+    echo "  ✅ $f"
+  done
+fi
+
+# ---- Rust ----
+if [ -f "Cargo.toml" ]; then
+  echo "=== Unit Tests ==="
+  find src/ -name "*.rs" 2>/dev/null | while read f; do
+    has_test=$(grep -c "#\[test\]" "$f" 2>/dev/null)
+    if [ "$has_test" -gt 0 ]; then
+      echo "  ✅ $f ($has_test tests)"
+    else
+      echo "  ❌ $f (no #[test])"
+    fi
+  done
+
+  echo "=== Integration Tests ==="
+  find tests/ -name "*.rs" 2>/dev/null | while read f; do
+    echo "  ✅ $f"
+  done
+fi
+
+# ---- Summary: uncovered modules ----
+echo ""
+echo "=== Uncovered Source Files ==="
+# Count files without tests (re-run logic, count only)
+```
+
+**PASS Criteria:**
+- ≥ 80% of source files have corresponding unit test files
+- At least one integration or E2E test suite exists (if applicable)
+
+**WARN Criteria:**
+- 50-79% of source files have unit tests
+- Missing integration or E2E tests entirely
+
+**FAIL Criteria:**
+- < 50% of source files have unit tests
+- No test files found at all
+
+#### FULL Mode — Coverage Tool Analysis
+
+Runs existing coverage tools to get precise line-level coverage data, aggregated by module/directory.
+
+**Check Instructions:**
+```bash
+# ---- Node.js / TypeScript ----
+if [ -f "package.json" ]; then
+  # Check if coverage tool is available (jest/vitest have it built-in)
+  npx jest --coverage --coverageReporters=text-summary 2>&1 | tail -20 || \
+  npx vitest run --coverage 2>&1 | tail -20 || \
+  echo "NO_COVERAGE_TOOL"
+
+  # Per-directory coverage (if jest)
+  npx jest --coverage --coverageReporters=text 2>&1 | grep -E "^\s*(src/|All files)" | head -30
+fi
+
+# ---- Python ----
+if [ -f "pyproject.toml" ] || [ -f "requirements.txt" ]; then
+  # pytest-cov provides per-module coverage
+  python -m pytest --cov=. --cov-report=term-missing 2>&1 | grep -E "^src/|^app/|^TOTAL" | head -30 || \
+  echo "NO_COVERAGE_TOOL: install pytest-cov"
+fi
+
+# ---- Go ----
+if [ -f "go.mod" ]; then
+  # Built-in coverage with per-function breakdown
+  go test ./... -cover -coverprofile=coverage.out 2>&1
+  go tool cover -func=coverage.out 2>&1 | tail -30
+  rm -f coverage.out
+fi
+
+# ---- Rust ----
+if [ -f "Cargo.toml" ]; then
+  # Requires cargo-tarpaulin or cargo-llvm-cov
+  cargo tarpaulin --out Stdout 2>&1 | tail -20 || \
+  cargo llvm-cov --summary-only 2>&1 | tail -20 || \
+  echo "NO_COVERAGE_TOOL: install cargo-tarpaulin or cargo-llvm-cov"
+fi
+```
+
+**PASS Criteria:**
+- Overall line coverage ≥ 80%
+- No module below 50% coverage
+- Coverage data successfully generated
+
+**WARN Criteria:**
+- Overall coverage 60-79%
+- 1-3 modules below 50% coverage
+- Some modules have 0% coverage
+
+**FAIL Criteria:**
+- Overall coverage < 60%
+- Many modules below 50% coverage
+- Coverage tool fails to run
+
+**SKIP Criteria (both modes):**
+- No source files detected
+- FULL mode only: no coverage tool available for the detected project type
+
+---
+
+### 9. 构建验证 (Build Verification) — FULL
 
 **Purpose:** Verify project builds successfully
 
@@ -259,7 +553,7 @@ fi
 
 ---
 
-### 7. 单元测试 (Unit Tests) — FULL
+### 10. 单元测试 (Unit Tests) — FULL
 
 **Purpose:** Verify unit tests pass and meet coverage thresholds
 
@@ -302,7 +596,7 @@ fi
 
 ---
 
-### 8. E2E 测试 (E2E Tests) — FULL
+### 11. E2E 测试 (E2E Tests) — FULL
 
 **Purpose:** Verify end-to-end tests pass
 
@@ -339,7 +633,7 @@ fi
 
 ---
 
-### 9. 依赖健康 (Dependency Health) — FULL
+### 12. 依赖健康 (Dependency Health) — FULL
 
 **Purpose:** Audit dependencies for security vulnerabilities and outdated packages
 
@@ -425,7 +719,51 @@ Generate a Markdown report with the following structure:
 
 **Suggestions:** [actionable recommendations]
 
-[... repeat for all 9 checks ...]
+[... repeat for checks 3-5 ...]
+
+### 6. 代码规模 (Code Size)
+**Status:** ✅ PASS / ⚠️ WARN / ❌ FAIL / ⏭️ SKIP
+
+**Details:**
+- Total lines of code: [N]
+- Total tracked files: [N]
+- Language breakdown: [TypeScript: N, Python: N, ...]
+
+**Suggestions:** [actionable recommendations]
+
+### 7. 近期变更统计 (Recent Changes)
+**Status:** ✅ PASS / ⚠️ WARN / ❌ FAIL / ⏭️ SKIP
+
+**Details:**
+- Last 7 days: [N commits, +N/-N lines (net: N)]
+- Last 30 days: [N commits, +N/-N lines (net: N)]
+- Top changed files: [list]
+
+**Suggestions:** [actionable recommendations]
+
+### 8. 测试覆盖矩阵 (Test Coverage Matrix)
+**Status:** ✅ PASS / ⚠️ WARN / ❌ FAIL / ⏭️ SKIP
+**Mode:** FAST (file mapping) / FULL (coverage tools)
+
+**Details (FAST):**
+| Module / Source File | unit | integration | e2e |
+|----------------------|------|-------------|-----|
+| src/auth/login.ts | ✅ | ✅ | ❌ |
+| src/auth/register.ts | ✅ | ❌ | ❌ |
+| src/payment/checkout.ts | ❌ | ❌ | ❌ |
+
+Coverage: [N]/[M] files have unit tests ([%]%)
+
+**Details (FULL, if available):**
+| Module | Lines | Covered | Coverage |
+|--------|-------|---------|----------|
+| src/auth | 120 | 108 | 90% |
+| src/payment | 85 | 34 | 40% |
+| **Total** | **205** | **142** | **69%** |
+
+**Suggestions:** [actionable recommendations]
+
+[... repeat for checks 9-12 (Full mode only) ...]
 
 ## Recommendations
 
